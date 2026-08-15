@@ -220,6 +220,15 @@
     enable = true;
     tailor-gui.enable = true;
   };
+  
+  # ---------- 合盖行为设置（兼容新版 NixOS 语法） ----------
+  services.logind.settings = {
+    Login = {
+      HandleLidSwitch = "ignore";               # 1. 电池供电时
+      HandleLidSwitchExternalPower = "ignore";  # 2. 插电源时
+      HandleLidSwitchDocked = "ignore";         # 3. 连接扩展坞/外接显示器时
+    };
+  };
 
   # ---------- 防火墙配置 ----------
   networking.firewall = {
