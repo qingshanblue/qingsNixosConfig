@@ -141,6 +141,9 @@
     withUWSM = true; # 启用 uwsm 生成会话
   };
 
+  # direnv
+  programs.direnv.enable = true;
+
   # ---------- nix-ld 配置 ----------
   programs.nix-ld = {
     enable = true;
