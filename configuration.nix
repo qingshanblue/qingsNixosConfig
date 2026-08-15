@@ -102,6 +102,7 @@
     pince
     fd
     go-musicfox
+    olympus
   ];
   
   # ---------- Steam 官方推荐开启方式 ----------
