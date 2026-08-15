@@ -221,5 +221,14 @@
     tailor-gui.enable = true;
   };
 
+  # ---------- 防火墙配置 ----------
+  networking.firewall = {
+    enable = true;
+    # 开放代理端口供局域网设备（如手机）访问
+    allowedTCPPorts = [ 20122 ];
+    # 如果代理软件使用了 UDP 协议（如 Hy2/QUIC 代理模式），也可以同时放行 UDP：
+    allowedUDPPorts = [ 20122 ];
+  };
+
   system.stateVersion = "26.05";
 }
