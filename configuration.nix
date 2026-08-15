@@ -89,7 +89,6 @@
     neovim
     qt6Packages.fcitx5-configtool
     xarchiver
-    tuxedo-rs
     waybar
     swaynotificationcenter
     hyprpolkitagent # 提权 Agent
@@ -204,6 +203,11 @@
     open = true;
     modesetting.enable = true;
     nvidiaSettings = true;
+  };
+
+  hardware.tuxedo-rs = {
+    enable = true;
+    tailor-gui.enable = true;
   };
 
   system.stateVersion = "26.05";
