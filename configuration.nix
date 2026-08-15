@@ -104,6 +104,13 @@
     go-musicfox
     olympus
   ];
+
+  services.cron = {
+    enable = true;
+    systemCronJobs = [
+      "00 01 * * * root /run/current-system/sw/bin/shutdown -h now"
+    ];
+  };
   
   # ---------- Steam 官方推荐开启方式 ----------
   programs.steam = {
