@@ -20,7 +20,7 @@
 
   # Select internationalisation properties.
   i18n.defaultLocale = "zh_CN.UTF-8";
-  
+
   # ---------- 自动垃圾回收与引导菜单优化 ----------
   nix.gc = {
     automatic = true;
@@ -57,10 +57,9 @@
     enable = true;
     type = "fcitx5";
     fcitx5 = {
-      waylandFrontend = true; # 开启 Wayland 原生支持
+      waylandFrontend = true;
       addons = with pkgs; [
-        fcitx5-rime
-        rime-ice
+        (fcitx5-rime.override { rimeDataPkgs = [ rime-ice ]; })
         fcitx5-gtk
       ];
     };
@@ -77,7 +76,7 @@
 
   nixpkgs.config.allowUnfree = true;
 
-  # ---------- 系统软件包 (已移除冗余的 steam 和 hyprland) ----------
+  # ---------- 系统软件包 ----------
   environment.systemPackages = with pkgs; [
     nemo
     google-chrome
@@ -88,21 +87,30 @@
     git
     neovim
     qt6Packages.fcitx5-configtool
-    xarchiver
+    # xarchiver
     waybar
     swaynotificationcenter
     hyprpolkitagent # 提权 Agent
     hyprpaper
     fastfetch
     telegram-desktop
-    wechat
-    netease-cloud-music-gtk
+    # wechat
+    # qq
     steam-run
     bottles
-    pince
+    # pince
     fd
     go-musicfox
     olympus
+    ouch
+    kdePackages.ark
+    kdePackages.kate
+    hyprshot
+    # gui-for-singbox
+    aria2
+    mission-center
+    glib # for gsettings
+    xdg-user-dirs # for xdg-user-dirs-update
   ];
 
   services.cron = {
@@ -111,7 +119,7 @@
       "00 01 * * * root /run/current-system/sw/bin/shutdown -h now"
     ];
   };
-  
+
   # ---------- Steam 官方推荐开启方式 ----------
   programs.steam = {
     enable = true;
@@ -123,7 +131,7 @@
   services.flatpak.enable = true;
   xdg.portal = {
     enable = true;
-    extraPortals = [ 
+    extraPortals = [
       pkgs.xdg-desktop-portal-gtk
       pkgs.xdg-desktop-portal-hyprland
     ];
@@ -148,6 +156,25 @@
     xwayland.enable = true;
     withUWSM = true; # 启用 uwsm 生成会话
   };
+
+  # sunshine
+  services.sunshine.enable = true;
+
+  # Aria2c
+  # services.aria2 = {
+    # enable = true;
+    # rpcSecretFile = pkgs.writeText "aria2-secret" "#8fb2c9";
+    # settings = {
+    #   enable-rpc = true;
+    #   rpc-listen-all = false;
+    #   rpc-allow-origin-all = true;
+    #   dir = "/home/qings/Downloads";
+    #   max-concurrent-downloads = 5;
+    #   max-connection-per-server = 16;
+    #   continue = true;
+    # };
+    # openPorts = false;
+  # };
 
   # direnv
   programs.direnv.enable = true;
@@ -220,8 +247,8 @@
     enable = true;
     tailor-gui.enable = true;
   };
-  
-  # ---------- 合盖行为设置（兼容新版 NixOS 语法） ----------
+
+  # ---------- 合盖行为设置 ----------
   services.logind.settings = {
     Login = {
       HandleLidSwitch = "ignore";               # 1. 电池供电时
@@ -233,11 +260,15 @@
   # ---------- 防火墙配置 ----------
   networking.firewall = {
     enable = true;
-    # 开放代理端口供局域网设备（如手机）访问
     allowedTCPPorts = [ 20122 ];
-    # 如果代理软件使用了 UDP 协议（如 Hy2/QUIC 代理模式），也可以同时放行 UDP：
     allowedUDPPorts = [ 20122 ];
   };
 
+  # ---------- 镜像源配置 ----------
+  nix.settings.substituters = [
+    "https://mirrors.ustc.edu.cn/nix-channels/store"
+    "https://cache.nixos.org"
+    ];
+  # ---------- 版本标识 -----------
   system.stateVersion = "26.05";
 }
