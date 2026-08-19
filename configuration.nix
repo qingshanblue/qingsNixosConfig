@@ -5,11 +5,23 @@
     ./hardware-configuration.nix
   ];
 
-  # Bootloader.
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
+  # ---------- Bootloader ----------
+  boot.loader = {
+    systemd-boot.enable = false;
+    grub = {
+      enable = true;
+      device = "nodev";
+      efiSupport = true;
+      useOSProber = true;
+      # 主题设置
+      theme = pkgs.catppuccin-grub.override {
+        flavor = "mocha";           # 深色主题风格 (mocha / macchiato / frappe)
+      };
+    };
+    efi.canTouchEfiVariables = true;
+  };
 
-  # Use latest kernel.
+  # Use kernel.
   boot.kernelPackages = pkgs.linuxPackages;
 
   networking.hostName = "nixos";
@@ -24,12 +36,9 @@
   # ---------- 自动垃圾回收与引导菜单优化 ----------
   nix.gc = {
     automatic = true;
-    dates = "weekly";            # 每周自动清理一次
-    options = "--delete-older-than 7d"; # 删除 7 天以前的所有旧版本
+    dates = "daily";            # 自动清理
+    options = "--delete-older-than 3d"; # 删除 n 天以前的所有旧版本
   };
-
-  # 限制 boot 启动菜单中最多只保留最近的 5 个版本
-  boot.loader.systemd-boot.configurationLimit = 5;
 
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "zh_SG.UTF-8";
@@ -69,7 +78,7 @@
   users.users."qings" = {
     isNormalUser = true;
     description = "qingshanblue";
-    extraGroups = [ "networkmanager" "wheel" "seat" ];
+    extraGroups = [ "networkmanager" "wheel" "seat" "tty" "input" ];
     packages = with pkgs; [];
     shell = pkgs.zsh; # 指定默认 Shell 为 Zsh
   };
@@ -87,7 +96,6 @@
     git
     neovim
     qt6Packages.fcitx5-configtool
-    # xarchiver
     waybar
     swaynotificationcenter
     hyprpolkitagent # 提权 Agent
@@ -98,7 +106,6 @@
     # qq
     steam-run
     bottles
-    # pince
     fd
     go-musicfox
     olympus
@@ -106,12 +113,59 @@
     kdePackages.ark
     kdePackages.kate
     hyprshot
-    # gui-for-singbox
-    aria2
     mission-center
     glib # for gsettings
     xdg-user-dirs # for xdg-user-dirs-update
+    zeroclaw
+    wpsoffice-cn
+    motrix-next
+    appimage-run
+    celluloid
+    swayimg
+    android-tools
+    scrcpy
+    rPackages.lcda
+    # pi-coding-agent
+    # opencode
+  # FHS Env
   ];
+
+  # nix ld
+  programs.nix-ld = {
+    enable = true;
+    libraries = with pkgs; [
+      # 基础 C/C++ 运行时
+      zlib
+      zstd
+      stdenv.cc.cc.lib
+      glib
+
+      # 图形与渲染
+      libGL
+      libxkbcommon
+      fontconfig
+      freetype
+      wayland
+
+      # X11 与 Qt 基础库（已更新为扁平化包名）
+      libxcb-cursor
+      libxcb-image
+      libxcb-keysyms
+      libxcb-render-util
+      libxcb-wm
+      libx11
+      libxext
+      libxi
+      libxrender
+      libxrandr
+      libxcursor
+      libxcomposite
+      libxdamage
+      libxfixes
+      libxcb
+      dbus
+    ];
+  };
 
   services.cron = {
     enable = true;
@@ -158,69 +212,16 @@
   };
 
   # sunshine
-  services.sunshine.enable = true;
-
-  # Aria2c
-  # services.aria2 = {
-    # enable = true;
-    # rpcSecretFile = pkgs.writeText "aria2-secret" "#8fb2c9";
-    # settings = {
-    #   enable-rpc = true;
-    #   rpc-listen-all = false;
-    #   rpc-allow-origin-all = true;
-    #   dir = "/home/qings/Downloads";
-    #   max-concurrent-downloads = 5;
-    #   max-connection-per-server = 16;
-    #   continue = true;
-    # };
-    # openPorts = false;
-  # };
+  services.sunshine = {
+    enable = true;
+    autoStart = true;
+    capSysAdmin = false;
+    openFirewall = true;
+    settings.port = 47989;
+  };
 
   # direnv
   programs.direnv.enable = true;
-
-  # ---------- nix-ld 配置 ----------
-  programs.nix-ld = {
-    enable = true;
-    libraries = with pkgs; [
-      # Webview / Tauri 依赖库
-      webkitgtk_4_1
-      libsoup_3
-
-      # GTK 与基础图形库
-      glib
-      gtk3
-      cairo
-      pango
-      gdk-pixbuf
-      atk
-
-      # 系统与网络服务
-      dbus
-      openssl
-      nss
-      nspr
-
-      # 显示与 Wayland/X11
-      libxkbcommon
-      wayland
-      libx11
-      libxcursor
-      libxrandr
-      libxcomposite
-      libxdamage
-      libxext
-      libxfixes
-      libxi
-      libxrender
-      libxtst
-      libxcb
-
-      # 硬件加速与音频
-      alsa-lib
-      mesa
-    ];
-  };
 
   # 字体配置
   fonts.packages = with pkgs; [
@@ -232,6 +233,11 @@
     enable = true;
     wayland.enable = true; # 使用 Wayland 渲染登录界面
   };
+
+  # 开启 GVfs 支持（Nemo 依赖它来实现回收站、挂载、网络共享等功能）
+  services.gvfs.enable = true;
+  # 在系统软件包中加入 udisks2 和 gvfs 工具链（确保文件删除操作具备文件系统权限）
+  services.udisks2.enable = true;
 
   # 图形与驱动
   hardware.graphics.enable = true;
