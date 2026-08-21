@@ -12,33 +12,29 @@
       enable = true;
       device = "nodev";
       efiSupport = true;
-      useOSProber = true;
-      # 主题设置
+      useOSProber = true; # 如果单系统不需要探测，可改为 false 加快启动
       theme = pkgs.catppuccin-grub.override {
-        flavor = "mocha";           # 深色主题风格 (mocha / macchiato / frappe)
+        flavor = "mocha";
       };
     };
     efi.canTouchEfiVariables = true;
   };
 
-  # Use kernel.
   boot.kernelPackages = pkgs.linuxPackages;
 
   networking.hostName = "nixos";
   networking.networkmanager.enable = true;
 
-  # Set your time zone.
   time.timeZone = "Asia/Singapore";
 
-  # Select internationalisation properties.
+  # ---------- 国际化与 Locale ----------
   i18n.defaultLocale = "zh_CN.UTF-8";
-
-  # ---------- 自动垃圾回收与引导菜单优化 ----------
-  nix.gc = {
-    automatic = true;
-    dates = "daily";            # 自动清理
-    options = "--delete-older-than 3d"; # 删除 n 天以前的所有旧版本
-  };
+  # 显式声明支持的 locales，防止 zh_SG.UTF-8 未生成导致回退
+  i18n.supportedLocales = [
+    "en_US.UTF-8/UTF-8"
+    "zh_CN.UTF-8/UTF-8"
+    "zh_SG.UTF-8/UTF-8"
+  ];
 
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "zh_SG.UTF-8";
@@ -51,15 +47,6 @@
     LC_TELEPHONE = "zh_SG.UTF-8";
     LC_TIME = "zh_SG.UTF-8";
   };
-
-  # Configure keymap in X11
-  services.xserver.xkb = {
-    layout = "cn";
-    variant = "";
-  };
-
-  # 显式开启 Polkit 提权服务授权
-  security.polkit.enable = true;
 
   # ---------- 输入法配置 ----------
   i18n.inputMethod = {
@@ -74,16 +61,54 @@
     };
   };
 
-  # User Account
+  # ---------- 字体配置 ----------
+  fonts.packages = with pkgs; [
+    maple-mono.NF-CN-unhinted
+    noto-fonts
+    noto-fonts-cjk-sans
+    noto-fonts-cjk-serif
+    noto-fonts-color-emoji
+  ];
+
+  # 固定字体回退顺序，防止中文或 emoji 显示成豆腐
+  fonts.fontconfig.defaultFonts = {
+    monospace = [ "MapleMono NF CN" "Noto Sans Mono CJK SC" ];
+    sansSerif = [ "Noto Sans CJK SC" "Noto Sans" ];
+    serif    = [ "Noto Serif CJK SC" "Noto Serif" ];
+    emoji    = [ "Noto Color Emoji" ];
+  };
+
+  # ---------- 用户账户 ----------
   users.users."qings" = {
     isNormalUser = true;
     description = "qingshanblue";
     extraGroups = [ "networkmanager" "wheel" "seat" "tty" "input" ];
-    packages = with pkgs; [];
-    shell = pkgs.zsh; # 指定默认 Shell 为 Zsh
+    shell = pkgs.zsh;
   };
 
   nixpkgs.config.allowUnfree = true;
+
+  # ---------- Nix 设置与镜像源 ----------
+  nix.settings = {
+    substituters = [
+      "https://mirrors.ustc.edu.cn/nix-channels/store"
+      "https://cache.nixos.org"
+    ];
+    # 必须显式声明信任公钥，否则非官方镜像可能被静默忽略
+    trusted-public-keys = [
+      "cache.nixos.org-1:6NCHbD9b2j5Tum1L0A8qhcJ9wUpN4Lo2RnBS4a4s4O0="
+    ];
+    experimental-features = [ "nix-command" "flakes" ];
+    auto-optimise-store = true; # 写入时自动去重硬链接
+  };
+
+  # ---------- 垃圾回收与存储优化 ----------
+  nix.gc = {
+    automatic = true;
+    dates = "daily";
+    options = "--delete-older-than 14d"; # 保留 14 天以便回滚
+  };
+  nix.optimise.automatic = true; # 定期运行 nix-store --optimise
 
   # ---------- 系统软件包 ----------
   environment.systemPackages = with pkgs; [
@@ -98,12 +123,10 @@
     qt6Packages.fcitx5-configtool
     waybar
     swaynotificationcenter
-    hyprpolkitagent # 提权 Agent
+    hyprpolkitagent
     hyprpaper
     fastfetch
     telegram-desktop
-    # wechat
-    # qq
     steam-run
     bottles
     fd
@@ -114,8 +137,8 @@
     kdePackages.kate
     hyprshot
     mission-center
-    glib # for gsettings
-    xdg-user-dirs # for xdg-user-dirs-update
+    glib
+    xdg-user-dirs
     zeroclaw
     wpsoffice-cn
     motrix-next
@@ -124,30 +147,24 @@
     swayimg
     android-tools
     scrcpy
-    rPackages.lcda
-    # pi-coding-agent
-    # opencode
-  # FHS Env
+    hmcl
+    osu-lazer-bin
+    # rPackages.lcda # 建议用 nix-shell 或放入独立开发环境，避免污染系统级
   ];
 
-  # nix ld
+  # ---------- Nix-ld (用于运行预编译二进制) ----------
   programs.nix-ld = {
     enable = true;
     libraries = with pkgs; [
-      # 基础 C/C++ 运行时
       zlib
       zstd
       stdenv.cc.cc.lib
       glib
-
-      # 图形与渲染
       libGL
       libxkbcommon
       fontconfig
       freetype
       wayland
-
-      # X11 与 Qt 基础库（已更新为扁平化包名）
       libxcb-cursor
       libxcb-image
       libxcb-keysyms
@@ -167,51 +184,51 @@
     ];
   };
 
+  # ---------- 定时任务 ----------
+  # 改为提前 3 分钟警告关机，避免数据丢失
   services.cron = {
     enable = true;
     systemCronJobs = [
-      "00 01 * * * root /run/current-system/sw/bin/shutdown -h now"
+      "00 01 * * * root /run/current-system/sw/bin/shutdown -h +3 \"System auto shutdown in 3 minutes...\""
     ];
   };
 
-  # ---------- Steam 官方推荐开启方式 ----------
+  # ---------- Steam ----------
   programs.steam = {
     enable = true;
-    remotePlay.openFirewall = true; # (可选) 开启远程畅玩防火墙端口
-    dedicatedServer.openFirewall = true; # (可选) 开启专服防火墙端口
+    remotePlay.openFirewall = true;
+    dedicatedServer.openFirewall = true;
   };
 
-  # ---------- 开启 Flatpak 支持与 Portal 补全 ----------
+  # ---------- Flatpak 与 Portal ----------
   services.flatpak.enable = true;
   xdg.portal = {
     enable = true;
     extraPortals = [
       pkgs.xdg-desktop-portal-gtk
+      pkgs.xdg-desktop-portal-gnome
       pkgs.xdg-desktop-portal-hyprland
     ];
   };
 
-  # ---------- Zsh 配置 ----------
+  # ---------- Shell 与提示符 ----------
   programs.zsh = {
     enable = true;
     enableCompletion = true;
     autosuggestions.enable = true;
     syntaxHighlighting.enable = true;
   };
+  programs.starship.enable = true;
 
-  # ---------- Starship 配置 ----------
-  programs.starship = {
-    enable = true;
-  };
-
-  # Hyprland 配置
+  # ---------- 桌面环境 ----------
   programs.hyprland = {
     enable = true;
     xwayland.enable = true;
-    withUWSM = true; # 启用 uwsm 生成会话
+    withUWSM = true;
   };
+  programs.niri.enable = true;
 
-  # sunshine
+  # ---------- Sunshine ----------
   services.sunshine = {
     enable = true;
     autoStart = true;
@@ -220,33 +237,34 @@
     settings.port = 47989;
   };
 
-  # direnv
-  programs.direnv.enable = true;
+  # ---------- 开发工具 ----------
+  programs.direnv.enable = true;  # NixOS 模块默认已自动集成 nix-direnv
 
-  # 字体配置
-  fonts.packages = with pkgs; [
-    maple-mono.NF-CN-unhinted
-  ];
-
-  # ---------- SDDM (Wayland 模式) 配置 ----------
+  # ---------- 登录管理器 ----------
   services.displayManager.sddm = {
     enable = true;
-    wayland.enable = true; # 使用 Wayland 渲染登录界面
+    wayland.enable = true;
   };
 
-  # 开启 GVfs 支持（Nemo 依赖它来实现回收站、挂载、网络共享等功能）
+  # ---------- 系统服务 ----------
+  security.polkit.enable = true;
   services.gvfs.enable = true;
-  # 在系统软件包中加入 udisks2 和 gvfs 工具链（确保文件删除操作具备文件系统权限）
   services.udisks2.enable = true;
 
-  # 图形与驱动
+  # ---------- 图形与 NVIDIA 驱动 ----------
   hardware.graphics.enable = true;
+  hardware.graphics.enable32Bit = true; # Steam 32位游戏必需
+
   services.xserver.videoDrivers = [ "nvidia" ];
 
   hardware.nvidia = {
-    open = true;
+    open = true;                  # Ampere 支持，保留
     modesetting.enable = true;
     nvidiaSettings = true;
+    powerManagement = {
+      enable = true;              # 保存/恢复 VRAM 状态，修复休眠唤醒黑屏
+      # finegrained = true;       # dGPU 直连内屏时无法启用，注释掉
+    };
   };
 
   hardware.tuxedo-rs = {
@@ -254,27 +272,36 @@
     tailor-gui.enable = true;
   };
 
-  # ---------- 合盖行为设置 ----------
+  # ---------- 环境变量 ----------
+  environment.sessionVariables = {
+    NVD_BACKEND = "direct";
+    GBM_BACKEND = "nvidia-drm"; # dGPU 直连内屏才保留，PRIME 模式请删除
+    __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+
+    # 让 Electron/Qt 优先走 Wayland
+    ELECTRON_OZONE_PLATFORM_HINT = "auto";
+    NIXOS_OZONE_WL = "1";
+
+    # Wayland 下 fcitx5 走 text-input 协议，不建议手动设 *_IM_MODULE
+    # 如果某个 XWayland 应用收不到输入，再单独在应用启动参数中指定
+  };
+
+  # ---------- 合盖行为 ----------
   services.logind.settings = {
     Login = {
-      HandleLidSwitch = "ignore";               # 1. 电池供电时
-      HandleLidSwitchExternalPower = "ignore";  # 2. 插电源时
-      HandleLidSwitchDocked = "ignore";         # 3. 连接扩展坞/外接显示器时
+      HandleLidSwitch = "ignore";
+      HandleLidSwitchExternalPower = "ignore";
+      HandleLidSwitchDocked = "ignore";
     };
   };
 
-  # ---------- 防火墙配置 ----------
+  # ---------- 防火墙 ----------
   networking.firewall = {
     enable = true;
     allowedTCPPorts = [ 20122 ];
     allowedUDPPorts = [ 20122 ];
   };
 
-  # ---------- 镜像源配置 ----------
-  nix.settings.substituters = [
-    "https://mirrors.ustc.edu.cn/nix-channels/store"
-    "https://cache.nixos.org"
-    ];
   # ---------- 版本标识 -----------
   system.stateVersion = "26.05";
 }
