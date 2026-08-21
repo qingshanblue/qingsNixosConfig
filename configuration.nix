@@ -148,8 +148,11 @@
     android-tools
     scrcpy
     hmcl
-    osu-lazer-bin
-    # rPackages.lcda # 建议用 nix-shell 或放入独立开发环境，避免污染系统级
+    osu-lazer
+    busybox
+    papirus-icon-theme
+    blueman
+    bluez-tools
   ];
 
   # ---------- Nix-ld (用于运行预编译二进制) ----------
@@ -267,6 +270,14 @@
     };
   };
 
+  # ---------- 网络与蓝牙 ----------
+  # 蓝牙
+  hardware.bluetooth = {
+    enable = true;
+    powerOnBoot = true; # 开机自动开启蓝牙
+  };
+
+  # 设备驱动
   hardware.tuxedo-rs = {
     enable = true;
     tailor-gui.enable = true;
