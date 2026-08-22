@@ -82,7 +82,7 @@
   users.users."qings" = {
     isNormalUser = true;
     description = "qingshanblue";
-    extraGroups = [ "networkmanager" "wheel" "seat" "tty" "input" ];
+    extraGroups = [ "networkmanager" "wheel" "seat" "tty" "input" "podman" ];
     shell = pkgs.zsh;
   };
 
@@ -139,7 +139,6 @@
     mission-center
     glib
     xdg-user-dirs
-    zeroclaw
     wpsoffice-cn
     motrix-next
     appimage-run
@@ -150,10 +149,18 @@
     hmcl
     osu-lazer
     busybox
-    papirus-icon-theme
     adwaita-icon-theme
+    papirus-icon-theme
     blueman
     bluez-tools
+    podman-desktop
+    gparted
+    # gui-for-singbox
+    better-control
+    pavucontrol
+    pi-coding-agent
+
+    # # close
   ];
 
   # ---------- Nix-ld (用于运行预编译二进制) ----------
@@ -188,6 +195,7 @@
     ];
   };
 
+
   # ---------- 定时任务 ----------
   # 改为提前 3 分钟警告关机，避免数据丢失
   services.cron = {
@@ -197,12 +205,14 @@
     ];
   };
 
-  # ---------- Steam ----------
-  programs.steam = {
+  # ---------- Shell 与提示符 ----------
+  programs.zsh = {
     enable = true;
-    remotePlay.openFirewall = true;
-    dedicatedServer.openFirewall = true;
+    enableCompletion = true;
+    autosuggestions.enable = true;
+    syntaxHighlighting.enable = true;
   };
+  programs.starship.enable = true;
 
   # ---------- Flatpak 与 Portal ----------
   services.flatpak.enable = true;
@@ -215,14 +225,14 @@
     ];
   };
 
-  # ---------- Shell 与提示符 ----------
-  programs.zsh = {
+  # ---------- Podman 容器虚拟化 ----------
+  virtualisation.podman = {
     enable = true;
-    enableCompletion = true;
-    autosuggestions.enable = true;
-    syntaxHighlighting.enable = true;
+    # 创建 `docker` 命令别名，这样原本基于 docker 的脚本和工具可以直接使用
+    dockerCompat = true;
+    # 启用默认网络的 DNS 解析（容器之间可以通过名称互相访问）
+    defaultNetwork.settings.dns_enabled = true;
   };
-  programs.starship.enable = true;
 
   # ---------- 桌面环境 ----------
   programs.hyprland = {
@@ -239,6 +249,13 @@
     capSysAdmin = false;
     openFirewall = true;
     settings.port = 47989;
+  };
+
+  # ---------- Steam ----------
+  programs.steam = {
+    enable = true;
+    remotePlay.openFirewall = true;
+    dedicatedServer.openFirewall = true;
   };
 
   # ---------- 开发工具 ----------
