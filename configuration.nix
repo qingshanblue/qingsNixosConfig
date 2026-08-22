@@ -151,6 +151,7 @@
     osu-lazer
     busybox
     papirus-icon-theme
+    adwaita-icon-theme
     blueman
     bluez-tools
   ];
