@@ -84,22 +84,9 @@
     description = "qingshanblue";
     extraGroups = [ "networkmanager" "wheel" "seat" "tty" "input" "podman" ];
     shell = pkgs.zsh;
-  };
-
-  nixpkgs.config.allowUnfree = true;
-
-  # ---------- Nix 设置与镜像源 ----------
-  nix.settings = {
-    substituters = [
-      "https://mirrors.ustc.edu.cn/nix-channels/store"
-      "https://cache.nixos.org"
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICqmCl4hD4e1vYIa7yCE30jpCSutMYJgEF6fiw8s26l6 qingshanblue@gmail.com"
     ];
-    # 必须显式声明信任公钥，否则非官方镜像可能被静默忽略
-    trusted-public-keys = [
-      "cache.nixos.org-1:6NCHbD9b2j5Tum1L0A8qhcJ9wUpN4Lo2RnBS4a4s4O0="
-    ];
-    experimental-features = [ "nix-command" "flakes" ];
-    auto-optimise-store = true; # 写入时自动去重硬链接
   };
 
   # ---------- 垃圾回收与存储优化 ----------
@@ -112,54 +99,72 @@
 
   # ---------- 系统软件包 ----------
   environment.systemPackages = with pkgs; [
-    nemo
-    google-chrome
-    walker
-    elephant
-    kitty
-    vscode
+    # # Development
     git
-    neovim
-    qt6Packages.fcitx5-configtool
-    waybar
-    swaynotificationcenter
-    hyprpolkitagent
-    hyprpaper
-    fastfetch
-    telegram-desktop
-    steam-run
-    bottles
-    fd
-    go-musicfox
-    olympus
-    ouch
-    kdePackages.ark
-    kdePackages.kate
-    hyprshot
-    mission-center
+    android-tools
+    nodejs
+    bun
+    llvm
+    cmake
+    python3
+    pixi
+    rustc
+    cargo
+    # # System
     glib
     xdg-user-dirs
-    wpsoffice-cn
-    motrix-next
-    appimage-run
-    celluloid
-    swayimg
-    android-tools
-    scrcpy
-    hmcl
-    osu-lazer
     busybox
+    neovim
+    kitty
+    nemo
+    elephant
+    walker
+    waybar
+    swaynotificationcenter
+    kdePackages.ark
+    hyprpolkitagent
+    hyprpaper
+    hyprshot
+    fastfetch
+    qt6Packages.fcitx5-configtool
+    mission-center
     adwaita-icon-theme
     papirus-icon-theme
+    better-control
+    pavucontrol
     blueman
     bluez-tools
+    google-chrome
+    vscode
+    motrix-next
+    celluloid
+    swayimg
+    steam-run
+    appimage-run
+    ouch
+    fd
+    # # User
+    scrcpy
+    go-musicfox
+    telegram-desktop
+    wpsoffice-cn
     podman-desktop
     gparted
     # gui-for-singbox
-    better-control
-    pavucontrol
+    # # Games
+    bottles
+    olympus
+    hmcl
+    osu-lazer
+    # # Agents
+    cc-switch
+    claude-code
+    codex
+    # hermes
+    opencode
+    # DeepSeek Harness
     pi-coding-agent
-
+    goose-cli
     # # close
   ];
 
@@ -240,7 +245,7 @@
     xwayland.enable = true;
     withUWSM = true;
   };
-  programs.niri.enable = true;
+  # programs.niri.enable = true;
 
   # ---------- Sunshine ----------
   services.sunshine = {
@@ -288,6 +293,25 @@
     };
   };
 
+  # llama cpp
+  services.llama-cpp = {
+    enable = true;
+    package = pkgs.llama-cpp.override {
+      cudaSupport = true;
+    };
+    settings = {
+      host = "127.0.0.1";
+      port = 8080;
+      # Hunyuan-MT-7B Q4_K_M，手动下载到 StateDirectory（沙箱内可读）
+      model = "/var/lib/llama-cpp/hunyuan-mt-7b-q4_k_m.gguf";
+      # 不手动设 n-gpu-layers，让 llama-server 按空闲显存自动分层
+      ctx-size = 8192;
+      parallel = 1; # 上下文平行量，实际单会话上下文 = ctx-size / parallel
+      temp = 0.7;
+    };
+    openFirewall = false;
+  };
+
   # ---------- 网络与蓝牙 ----------
   # 蓝牙
   hardware.bluetooth = {
@@ -324,11 +348,52 @@
     };
   };
 
+  # ---------- SSH 服务 ----------
+  services.openssh = {
+    enable = true;
+    ports = [ 2222 ]; # 默认端口为 22，如果想改端口（如 2222），修改这里
+    settings = {
+      PasswordAuthentication = false; # 禁用密码登录，更安全
+      PermitRootLogin = "no";         # 禁止 root 用户直接登录
+      PubkeyAuthentication = true;    # 允许使用密钥认证
+    };
+    # 如果你想允许 X11 转发或端口转发，可以在这里开启（默认关闭是安全的）
+    # settings.X11Forwarding = true;
+    # settings.AllowTcpForwarding = "yes";
+  };
+
+  programs.proxychains = {
+    enable = true;
+    proxies = {
+      localProxy = {
+        type = "socks5";
+        host = "localhost";
+        port = "20122";
+      };
+    };
+  };
+
   # ---------- 防火墙 ----------
   networking.firewall = {
     enable = true;
-    allowedTCPPorts = [ 20122 ];
+    allowedTCPPorts = [ 2222 20122 ];
     allowedUDPPorts = [ 20122 ];
+  };
+
+  nixpkgs.config.allowUnfree = true;
+
+  # ---------- Nix 设置与镜像源 ----------
+  nix.settings = {
+    substituters = [
+      "https://mirrors.ustc.edu.cn/nix-channels/store"
+      "https://cache.nixos.org"
+    ];
+    # 显式声明信任公钥
+    trusted-public-keys = [
+      # 
+    ];
+    experimental-features = [ "nix-command" "flakes" ];
+    auto-optimise-store = true; # 写入时自动去重硬链接
   };
 
   # ---------- 版本标识 -----------
