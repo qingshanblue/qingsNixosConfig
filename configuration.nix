@@ -102,14 +102,32 @@
     # # Development
     git
     android-tools
+    # JS/TS
     nodejs
+    typescript
     bun
-    llvm
+    typescript-language-server
+    # C/CPP
+    clang
+    bintools
+    lldb
+    clang-tools
     cmake
+    gnumake
+    # Python
     python3
     pixi
+    # Rust
     rustc
     cargo
+    rust-analyzer
+    clippy  # Optional
+    rustfmt # Optional
+    # GO
+    go
+    gopls
+    delve
+    golangci-lint # Optional
     # # System
     glib
     xdg-user-dirs
