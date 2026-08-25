@@ -162,9 +162,12 @@
     appimage-run
     ouch
     fd
+    iptables
     # # User
     scrcpy
     go-musicfox
+    qq
+    wechat
     telegram-desktop
     wpsoffice-cn
     podman-desktop
@@ -300,20 +303,33 @@
   hardware.graphics.enable = true;
   hardware.graphics.enable32Bit = true; # Steam 32位游戏必需
 
-  services.xserver.videoDrivers = [ "nvidia" ];
+  # 核显主显（amdgpu），NVIDIA 作为 PRIME 副卡
+  services.xserver.videoDrivers = [ "amdgpu" "nvidia" ];
 
   hardware.nvidia = {
     open = true;                  # Ampere 支持，保留
     modesetting.enable = true;
     nvidiaSettings = true;
+    prime = {
+      offload = {
+        enable = true;
+        enableOffloadCmd = true;        # 提供独显启动命令
+        offloadCmdMainProgram = "prime-run";  # 命令名用通用的 prime-run
+      };
+      amdgpuBusId = "PCI:6:0:0";   # 0000:06:00.0 (Vega 核显)
+      nvidiaBusId = "PCI:1:0:0";   # 0000:01:00.0 (RTX 3060)
+    };
     powerManagement = {
-      enable = true;              # 保存/恢复 VRAM 状态，修复休眠唤醒黑屏
-      # finegrained = true;       # dGPU 直连内屏时无法启用，注释掉
+      enable = true;            # 保存/恢复 VRAM 状态，修复休眠唤醒黑屏
+      finegrained = true;       # PRIME 模式下可开启省电，如有应用唤不醒独显再关
     };
   };
 
   # 启用 Waydroid
-virtualisation.waydroid.enable = true;
+  virtualisation.waydroid = {
+    enable = true;
+    package = pkgs.waydroid-nftables;
+  };
 
   # llama cpp
   services.llama-cpp = {
@@ -349,9 +365,10 @@ virtualisation.waydroid.enable = true;
 
   # ---------- 环境变量 ----------
   environment.sessionVariables = {
-    NVD_BACKEND = "direct";
-    GBM_BACKEND = "nvidia-drm"; # dGPU 直连内屏才保留，PRIME 模式请删除
-    __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+    # PRIME 模式：不要全局强制 NVIDIA，需要独显的应用用 prime-run 启动
+    # NVD_BACKEND = "direct";
+    # GBM_BACKEND = "nvidia-drm";
+    # __GLX_VENDOR_LIBRARY_NAME = "nvidia";
 
     # 让 Electron/Qt 优先走 Wayland
     ELECTRON_OZONE_PLATFORM_HINT = "auto";
