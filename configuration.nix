@@ -117,6 +117,7 @@
     # Python
     python3
     pixi
+    uv
     # Rust
     rustc
     cargo
