@@ -312,6 +312,9 @@
     };
   };
 
+  # 启用 Waydroid
+virtualisation.waydroid.enable = true;
+
   # llama cpp
   services.llama-cpp = {
     enable = true;
@@ -330,7 +333,7 @@
     };
     openFirewall = false;
   };
-
+  systemd.services.llama-cpp.wantedBy = pkgs.lib.mkForce [ ]; # 关闭开机自启
   # ---------- 网络与蓝牙 ----------
   # 蓝牙
   hardware.bluetooth = {
@@ -401,18 +404,21 @@
 
   nixpkgs.config.allowUnfree = true;
 
-  # ---------- Nix 设置与镜像源 ----------
+    # ---------- Nix 设置与镜像源 ----------
   nix.settings = {
     substituters = [
-      "https://mirrors.ustc.edu.cn/nix-channels/store"
+      # 1. CERNET 镜像源
+      "https://mirrors.cernet.edu.cn/nix-channels/store"
+      # 2. 官方源 (海外备用，CERNET 未同步时回退使用)
       "https://cache.nixos.org"
     ];
-    # 显式声明信任公钥
+    # 必须显式声明信任官方公钥！
+    # CERNET 镜像的是官方缓存，所以共用同一把公钥
     trusted-public-keys = [
-      # 
+      "cache.nixos.org-1:6NCHbD9b2j5Tum1L0A8qhcJ9wUpN4Lo2RnBS4a4s4O0="
     ];
     experimental-features = [ "nix-command" "flakes" ];
-    auto-optimise-store = true; # 写入时自动去重硬链接
+    auto-optimise-store = true;
   };
 
   # ---------- 版本标识 -----------
