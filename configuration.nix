@@ -99,6 +99,23 @@
 
   # ---------- 系统软件包 ----------
   environment.systemPackages = with pkgs; [
+    # Waydroid ARM 转译层安装工具（libndk/libhoudini/gapps）
+    (stdenv.mkDerivation {
+      pname = "waydroid-script";
+      version = "2026-01-05";
+      src = fetchzip {
+        url = "https://github.com/casualsnek/waydroid_script/archive/d5289cfd8929e86e7f0dc89ecadcef8b66930eec.tar.gz";
+        sha256 = "sha256-zSHZlhHJHWZRE3I5pYWhD4o8aNpa8rTiEtl2qJTuRjw=";
+      };
+      nativeBuildInputs = [ makeWrapper ];
+      installPhase = ''
+        mkdir -p $out/share/waydroid-script $out/bin
+        cp -r . $out/share/waydroid-script/
+        makeWrapper ${lib.getExe (python3.withPackages (p: with p; [ requests tqdm inquirerpy ]))} \
+          $out/bin/waydroid-script \
+          --add-flags "$out/share/waydroid-script/main.py"
+      '';
+    })
     # # Development
     git
     android-tools
@@ -330,6 +347,15 @@
     enable = true;
     package = pkgs.waydroid-nftables;
   };
+
+  # 测试服务
+  # systemd.services.test-minimal = {
+  #   description = "test";
+  #   wantedBy = [ "multi-user.target" ];
+  #   serviceConfig.Type = "oneshot";
+  #   script = "echo hi";
+  # };
+
 
   # llama cpp
   services.llama-cpp = {
