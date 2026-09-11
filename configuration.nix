@@ -12,7 +12,7 @@
       enable = true;
       device = "nodev";
       efiSupport = true;
-      useOSProber = true; # 如果单系统不需要探测，可改为 false 加快启动
+      useOSProber = true;
       theme = pkgs.catppuccin-grub.override {
         flavor = "mocha";
       };
@@ -22,18 +22,23 @@
 
   boot.kernelPackages = pkgs.linuxPackages;
 
+  # ---------- 内核参数 ----------
+  # NVIDIA 专有驱动需要的参数，修复 open 模块的显示兼容性
+  boot.kernelParams = [
+    "nvidia-drm.modeset=1"
+    "nvidia.NVreg_PreserveVideoMemoryAllocations=1"
+  ];
+
   networking.hostName = "nixos";
   networking.networkmanager.enable = true;
 
   time.timeZone = "Asia/Singapore";
 
   # ---------- 国际化与 Locale ----------
-  i18n.defaultLocale = "zh_CN.UTF-8";
-  # 显式声明支持的 locales，防止 zh_SG.UTF-8 未生成导致回退
+  i18n.defaultLocale = "zh_SG.UTF-8";
   i18n.supportedLocales = [
-    "en_US.UTF-8/UTF-8"
-    "zh_CN.UTF-8/UTF-8"
     "zh_SG.UTF-8/UTF-8"
+    "en_US.UTF-8/UTF-8"
   ];
 
   i18n.extraLocaleSettings = {
@@ -70,7 +75,6 @@
     noto-fonts-color-emoji
   ];
 
-  # 固定字体回退顺序，防止中文或 emoji 显示成豆腐
   fonts.fontconfig.defaultFonts = {
     monospace = [ "MapleMono NF CN" "Noto Sans Mono CJK SC" ];
     sansSerif = [ "Noto Sans CJK SC" "Noto Sans" ];
@@ -93,13 +97,13 @@
   nix.gc = {
     automatic = true;
     dates = "daily";
-    options = "--delete-older-than 14d"; # 保留 14 天以便回滚
+    options = "--delete-older-than 14d";
   };
-  nix.optimise.automatic = true; # 定期运行 nix-store --optimise
+  nix.optimise.automatic = true;
 
   # ---------- 系统软件包 ----------
   environment.systemPackages = with pkgs; [
-    # Waydroid ARM 转译层安装工具（libndk/libhoudini/gapps）
+    # Waydroid ARM 转译层安装工具
     (stdenv.mkDerivation {
       pname = "waydroid-script";
       version = "2026-01-05";
@@ -116,132 +120,47 @@
           --add-flags "$out/share/waydroid-script/main.py"
       '';
     })
-    # # Development
-    git
-    android-tools
-    # JS/TS
-    nodejs
-    typescript
-    bun
-    typescript-language-server
-    # C/CPP
-    clang
-    bintools
-    lldb
-    clang-tools
-    cmake
-    gnumake
-    # Python
-    python3
-    pixi
-    uv
-    # Rust
-    rustc
-    cargo
-    rust-analyzer
-    clippy  # Optional
-    rustfmt # Optional
-    # GO
-    go
-    gopls
-    delve
-    golangci-lint # Optional
-    # # System
-    glib
-    xdg-user-dirs
-    busybox
-    neovim
-    kitty
-    nemo
-    elephant
-    walker
-    waybar
-    swaynotificationcenter
-    kdePackages.ark
-    hyprpolkitagent
-    hyprpaper
-    hyprshot
-    fastfetch
-    qt6Packages.fcitx5-configtool
-    mission-center
-    adwaita-icon-theme
-    papirus-icon-theme
-    better-control
-    pavucontrol
-    blueman
-    bluez-tools
-    google-chrome
-    vscode
-    motrix-next
-    celluloid
-    swayimg
-    steam-run
-    appimage-run
-    ouch
-    fd
-    iptables
-    # # User
-    scrcpy
-    go-musicfox
-    qq
-    wechat
-    telegram-desktop
-    wpsoffice-cn
-    podman-desktop
-    gparted
-    # gui-for-singbox
-    # # Games
-    bottles
-    olympus
-    hmcl
-    osu-lazer
-    # # Agents
-    cc-switch
-    claude-code
-    codex
-    # hermes
-    opencode
-    # DeepSeek Harness
-    pi-coding-agent
-    goose-cli
-    # # close
+    
+    # Development
+    git android-tools nodejs typescript bun typescript-language-server
+    clang bintools lldb clang-tools cmake gnumake
+    python3 pixi uv
+    rustc cargo rust-analyzer clippy rustfmt
+    go gopls delve golangci-lint
+    
+    # System & Desktop
+    glib xdg-user-dirs busybox neovim kitty nemo
+    elephant walker waybar swaynotificationcenter
+    kdePackages.ark hyprpolkitagent hyprpaper hyprshot hyprlock
+    fastfetch qt6Packages.fcitx5-configtool mission-center
+    adwaita-icon-theme papirus-icon-theme better-control
+    pavucontrol blueman bluez-tools google-chrome firefox
+    vscode.fhs motrix-next celluloid swayimg steam-run appimage-run
+    ouch fd iptables
+    
+    # User Apps
+    gui-for-singbox scrcpy go-musicfox qq wechat telegram-desktop
+    wpsoffice-cn podman-desktop gparted
+    
+    # Games
+    bottles olympus hmcl osu-lazer
+    
+    # Agents
+    cc-switch claude-code codex opencode pi-coding-agent goose-cli
   ];
 
   # ---------- Nix-ld (用于运行预编译二进制) ----------
   programs.nix-ld = {
     enable = true;
     libraries = with pkgs; [
-      zlib
-      zstd
-      stdenv.cc.cc.lib
-      glib
-      libGL
-      libxkbcommon
-      fontconfig
-      freetype
-      wayland
-      libxcb-cursor
-      libxcb-image
-      libxcb-keysyms
-      libxcb-render-util
-      libxcb-wm
-      libx11
-      libxext
-      libxi
-      libxrender
-      libxrandr
-      libxcursor
-      libxcomposite
-      libxdamage
-      libxfixes
-      libxcb
-      dbus
+      zlib zstd stdenv.cc.cc.lib glib libGL libxkbcommon fontconfig
+      freetype wayland libxcb-cursor libxcb-image libxcb-keysyms
+      libxcb-render-util libxcb-wm libx11 libxext libxi libxrender
+      libxrandr libxcursor libxcomposite libxdamage libxfixes libxcb dbus
     ];
   };
 
-
   # ---------- 定时任务 ----------
-  # 改为提前 3 分钟警告关机，避免数据丢失
   services.cron = {
     enable = true;
     systemCronJobs = [
@@ -272,9 +191,7 @@
   # ---------- Podman 容器虚拟化 ----------
   virtualisation.podman = {
     enable = true;
-    # 创建 `docker` 命令别名，这样原本基于 docker 的脚本和工具可以直接使用
     dockerCompat = true;
-    # 启用默认网络的 DNS 解析（容器之间可以通过名称互相访问）
     defaultNetwork.settings.dns_enabled = true;
   };
 
@@ -284,12 +201,11 @@
     xwayland.enable = true;
     withUWSM = true;
   };
-  # programs.niri.enable = true;
 
-  # ---------- Sunshine ----------
+  # ---------- Sunshine (关闭开机自启) ----------
   services.sunshine = {
     enable = true;
-    autoStart = true;
+    autoStart = false;
     capSysAdmin = false;
     openFirewall = true;
     settings.port = 47989;
@@ -303,7 +219,7 @@
   };
 
   # ---------- 开发工具 ----------
-  programs.direnv.enable = true;  # NixOS 模块默认已自动集成 nix-direnv
+  programs.direnv.enable = true;
 
   # ---------- 登录管理器 ----------
   services.displayManager.sddm = {
@@ -315,98 +231,67 @@
   security.polkit.enable = true;
   services.gvfs.enable = true;
   services.udisks2.enable = true;
+  services.upower.enable = true;
 
-  # ---------- 图形与 NVIDIA 驱动 ----------
-  hardware.graphics.enable = true;
-  hardware.graphics.enable32Bit = true; # Steam 32位游戏必需
-
-  # 核显主显（amdgpu），NVIDIA 作为 PRIME 副卡
-  services.xserver.videoDrivers = [ "amdgpu" "nvidia" ];
-
-  hardware.nvidia = {
-    open = true;                  # Ampere 支持，保留
-    modesetting.enable = true;
-    nvidiaSettings = true;
-    prime = {
-      offload = {
-        enable = true;
-        enableOffloadCmd = true;        # 提供独显启动命令
-        offloadCmdMainProgram = "prime-run";  # 命令名用通用的 prime-run
-      };
-      amdgpuBusId = "PCI:6:0:0";   # 0000:06:00.0 (Vega 核显)
-      nvidiaBusId = "PCI:1:0:0";   # 0000:01:00.0 (RTX 3060)
-    };
-    powerManagement = {
-      enable = true;            # 保存/恢复 VRAM 状态，修复休眠唤醒黑屏
-      finegrained = true;       # PRIME 模式下可开启省电，如有应用唤不醒独显再关
-    };
+  # ---------- 音频 ----------
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    alsa.support32Bit = true;
+    pulse.enable = true;
   };
 
-  # 启用 Waydroid
+  # ==============================================================
+  # ---------- 图形与 NVIDIA 驱动 (最小化基准配置) ----------
+  # ==============================================================
+  hardware.graphics.enable = true;
+  # hardware.graphics.enable32Bit = true;
+
+  services.xserver.videoDrivers = [ "nvidia" ];
+
+  hardware.nvidia = {
+    open = false;                  # 切换到专有驱动，修复 open 模块的显示兼容性
+    modesetting.enable = true;
+    nvidiaSettings = true;
+    powerManagement.enable = true;  # 启用电源管理
+    # powerManagement.finegrained = true;  # 单显卡不需要PRIME offload
+    nvidiaPersistenced = true;      # 持久模式，减少 GPU P-state 切换导致的闪屏
+  };
+  # ==============================================================
+
+  # ---------- Waydroid ----------
   virtualisation.waydroid = {
     enable = true;
     package = pkgs.waydroid-nftables;
   };
 
-  # 测试服务
-  # systemd.services.test-minimal = {
-  #   description = "test";
-  #   wantedBy = [ "multi-user.target" ];
-  #   serviceConfig.Type = "oneshot";
-  #   script = "echo hi";
-  # };
-
-
-  # llama cpp
-  services.llama-cpp = {
-    enable = true;
-    package = pkgs.llama-cpp.override {
-      cudaSupport = true;
-    };
-    settings = {
-      host = "127.0.0.1";
-      port = 8080;
-      # Hunyuan-MT-7B Q4_K_M，手动下载到 StateDirectory（沙箱内可读）
-      model = "/var/lib/llama-cpp/hunyuan-mt-7b-q4_k_m.gguf";
-      # 不手动设 n-gpu-layers，让 llama-server 按空闲显存自动分层
-      ctx-size = 8192;
-      parallel = 1; # 上下文平行量，实际单会话上下文 = ctx-size / parallel
-      temp = 0.7;
-    };
-    openFirewall = false;
-  };
-  systemd.services.llama-cpp.wantedBy = pkgs.lib.mkForce [ ]; # 关闭开机自启
   # ---------- 网络与蓝牙 ----------
-  # 蓝牙
   hardware.bluetooth = {
     enable = true;
-    powerOnBoot = true; # 开机自动开启蓝牙
+    powerOnBoot = true;
   };
 
-  # 设备驱动
   hardware.tuxedo-rs = {
     enable = true;
     tailor-gui.enable = true;
   };
 
-  # ---------- 环境变量 ----------
+  # ==============================================================
+  # ---------- 环境变量 (清理为最小化) ----------
+  # ==============================================================
+  # 移除了所有 NVD_BACKEND、GBM_BACKEND 和 WLR_DRM_NO_ATOMIC 等覆盖。
+  # 仅保留让 Electron 应用在 Wayland 下正常运行的基础变量。
   environment.sessionVariables = {
-    # PRIME 模式：不要全局强制 NVIDIA，需要独显的应用用 prime-run 启动
-    # NVD_BACKEND = "direct";
-    # GBM_BACKEND = "nvidia-drm";
-    # __GLX_VENDOR_LIBRARY_NAME = "nvidia";
-
-    # 让 Electron/Qt 优先走 Wayland
-    ELECTRON_OZONE_PLATFORM_HINT = "auto";
     NIXOS_OZONE_WL = "1";
-
-    # Wayland 下 fcitx5 走 text-input 协议，不建议手动设 *_IM_MODULE
-    # 如果某个 XWayland 应用收不到输入，再单独在应用启动参数中指定
+    ELECTRON_OZONE_PLATFORM_HINT = "auto";
   };
+  # ==============================================================
 
   # ---------- 合盖行为 ----------
   services.logind.settings = {
     Login = {
+      IdleAction = "lock";
+      IdleActionUSec = "10min";
       HandleLidSwitch = "ignore";
       HandleLidSwitchExternalPower = "ignore";
       HandleLidSwitchDocked = "ignore";
@@ -416,15 +301,12 @@
   # ---------- SSH 服务 ----------
   services.openssh = {
     enable = true;
-    ports = [ 2222 ]; # 默认端口为 22，如果想改端口（如 2222），修改这里
+    ports = [ 2222 ];
     settings = {
-      PasswordAuthentication = false; # 禁用密码登录，更安全
-      PermitRootLogin = "no";         # 禁止 root 用户直接登录
-      PubkeyAuthentication = true;    # 允许使用密钥认证
+      PasswordAuthentication = false;
+      PermitRootLogin = "no";
+      PubkeyAuthentication = true;
     };
-    # 如果你想允许 X11 转发或端口转发，可以在这里开启（默认关闭是安全的）
-    # settings.X11Forwarding = true;
-    # settings.AllowTcpForwarding = "yes";
   };
 
   programs.proxychains = {
@@ -447,16 +329,12 @@
 
   nixpkgs.config.allowUnfree = true;
 
-    # ---------- Nix 设置与镜像源 ----------
+  # ---------- Nix 设置与镜像源 ----------
   nix.settings = {
     substituters = [
-      # 1. CERNET 镜像源
       "https://mirrors.cernet.edu.cn/nix-channels/store"
-      # 2. 官方源 (海外备用，CERNET 未同步时回退使用)
       "https://cache.nixos.org"
     ];
-    # 必须显式声明信任官方公钥！
-    # CERNET 镜像的是官方缓存，所以共用同一把公钥
     trusted-public-keys = [
       "cache.nixos.org-1:6NCHbD9b2j5Tum1L0A8qhcJ9wUpN4Lo2RnBS4a4s4O0="
     ];
