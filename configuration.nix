@@ -23,11 +23,6 @@
   boot.kernelPackages = pkgs.linuxPackages;
 
   # ---------- 内核参数 ----------
-  # NVIDIA 专有驱动需要的参数，修复 open 模块的显示兼容性
-  boot.kernelParams = [
-    "nvidia-drm.modeset=1"
-    "nvidia.NVreg_PreserveVideoMemoryAllocations=1"
-  ];
 
   networking.hostName = "nixos";
   networking.networkmanager.enable = true;
@@ -94,12 +89,12 @@
   };
 
   # ---------- 垃圾回收与存储优化 ----------
+  nix.optimise.automatic = true;
   nix.gc = {
     automatic = true;
     dates = "daily";
     options = "--delete-older-than 14d";
   };
-  nix.optimise.automatic = true;
 
   # ---------- 系统软件包 ----------
   environment.systemPackages = with pkgs; [
@@ -139,14 +134,17 @@
     ouch fd iptables
     
     # User Apps
-    gui-for-singbox scrcpy go-musicfox qq wechat telegram-desktop
+    gui-for-singbox #YesPlayMusic
+    scrcpy go-musicfox 
+    qq wechat telegram-desktop
     wpsoffice-cn podman-desktop gparted
+    obsidian
     
     # Games
     bottles olympus hmcl osu-lazer
     
     # Agents
-    cc-switch claude-code codex opencode pi-coding-agent goose-cli
+    cc-switch claude-code codex opencode pi-coding-agent
   ];
 
   # ---------- Nix-ld (用于运行预编译二进制) ----------
@@ -183,7 +181,6 @@
     enable = true;
     extraPortals = [
       pkgs.xdg-desktop-portal-gtk
-      pkgs.xdg-desktop-portal-gnome
       pkgs.xdg-desktop-portal-hyprland
     ];
   };
@@ -196,16 +193,17 @@
   };
 
   # ---------- 桌面环境 ----------
+  services.desktopManager.plasma6.enable = true;
   programs.hyprland = {
     enable = true;
     xwayland.enable = true;
     withUWSM = true;
   };
 
-  # ---------- Sunshine (关闭开机自启) ----------
+  # ---------- Sunshine  ----------
   services.sunshine = {
     enable = true;
-    autoStart = false;
+    autoStart = true;
     capSysAdmin = false;
     openFirewall = true;
     settings.port = 47989;
@@ -244,18 +242,15 @@
   # ==============================================================
   # ---------- 图形与 NVIDIA 驱动 (最小化基准配置) ----------
   # ==============================================================
-  hardware.graphics.enable = true;
-  # hardware.graphics.enable32Bit = true;
-
+  hardware.graphics = {
+    enable = true;
+    enable32Bit = true;
+  };
   services.xserver.videoDrivers = [ "nvidia" ];
-
   hardware.nvidia = {
-    open = false;                  # 切换到专有驱动，修复 open 模块的显示兼容性
+    open = true;
     modesetting.enable = true;
     nvidiaSettings = true;
-    powerManagement.enable = true;  # 启用电源管理
-    # powerManagement.finegrained = true;  # 单显卡不需要PRIME offload
-    nvidiaPersistenced = true;      # 持久模式，减少 GPU P-state 切换导致的闪屏
   };
   # ==============================================================
 
