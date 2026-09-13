@@ -23,7 +23,6 @@
   boot.kernelPackages = pkgs.linuxPackages;
 
   # ---------- 内核参数 ----------
-
   networking.hostName = "nixos";
   networking.networkmanager.enable = true;
 
@@ -117,7 +116,7 @@
     })
     
     # Development
-    git android-tools nodejs typescript bun typescript-language-server
+    git yq android-tools nodejs typescript bun typescript-language-server
     clang bintools lldb clang-tools cmake gnumake
     python3 pixi uv
     rustc cargo rust-analyzer clippy rustfmt
@@ -144,17 +143,17 @@
     bottles olympus hmcl osu-lazer
     
     # Agents
-    cc-switch claude-code codex opencode pi-coding-agent
+    cc-switch claude-code codex pi-coding-agent
   ];
 
   # ---------- Nix-ld (用于运行预编译二进制) ----------
   programs.nix-ld = {
     enable = true;
     libraries = with pkgs; [
-      zlib zstd stdenv.cc.cc.lib glib libGL libxkbcommon fontconfig
+      zlib zstd stdenv.cc.cc.lib glib libGL libxkbcommon fontconfig libxshmfence 
       freetype wayland libxcb-cursor libxcb-image libxcb-keysyms
-      libxcb-render-util libxcb-wm libx11 libxext libxi libxrender
-      libxrandr libxcursor libxcomposite libxdamage libxfixes libxcb dbus
+      libxcb-render-util libxcb-wm libx11 libxext libxi libxrender fuse2
+      libxrandr libxcursor libxcomposite libxdamage libxfixes libxcb dbus 
     ];
   };
 
@@ -193,7 +192,7 @@
   };
 
   # ---------- 桌面环境 ----------
-  services.desktopManager.plasma6.enable = true;
+  # services.desktopManager.plasma6.enable = true;
   programs.hyprland = {
     enable = true;
     xwayland.enable = true;
