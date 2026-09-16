@@ -21,6 +21,7 @@
   };
 
   boot.kernelPackages = pkgs.linuxPackages;
+  boot.kernelParams = [ "resume=UUID=32a6a3c5-1ece-42cf-b802-9cb043a56e21" ];
 
   # ---------- 内核参数 ----------
   networking.hostName = "nixos";
@@ -137,10 +138,10 @@
     scrcpy go-musicfox 
     qq wechat telegram-desktop
     wpsoffice-cn podman-desktop gparted
-    obsidian
+    obsidian zotero
     
     # Games
-    bottles olympus hmcl osu-lazer
+    protonup-rs bottles olympus hmcl osu-lazer
     
     # Agents
     cc-switch claude-code codex pi-coding-agent
@@ -171,6 +172,7 @@
     enableCompletion = true;
     autosuggestions.enable = true;
     syntaxHighlighting.enable = true;
+    
   };
   programs.starship.enable = true;
 
@@ -202,7 +204,7 @@
   # ---------- Sunshine  ----------
   services.sunshine = {
     enable = true;
-    autoStart = true;
+    autoStart = false;
     capSysAdmin = false;
     openFirewall = true;
     settings.port = 47989;
@@ -219,9 +221,15 @@
   programs.direnv.enable = true;
 
   # ---------- 登录管理器 ----------
-  services.displayManager.sddm = {
-    enable = true;
-    wayland.enable = true;
+  services.displayManager = {
+    sddm = {
+      enable = true;
+      wayland.enable = true;
+    };
+    autoLogin = {
+      enable = true;
+      user = "qings";
+    };
   };
 
   # ---------- 系统服务 ----------
@@ -247,9 +255,10 @@
   };
   services.xserver.videoDrivers = [ "nvidia" ];
   hardware.nvidia = {
-    open = true;
+    open = false;
     modesetting.enable = true;
     nvidiaSettings = true;
+    powerManagement.enable = true;  # 休眠唤醒需要
   };
   # ==============================================================
 
@@ -312,6 +321,13 @@
         port = "20122";
       };
     };
+  };
+
+  # ---------- Tailscale 组网 ----------
+  # 手机端装 Tailscale App 登同一账号，Moonlight 连本机 100.x.x.x
+  services.tailscale = {
+    enable = true;
+    openFirewall = true;  # 放行 UDP 41641，提高打洞直连成功率
   };
 
   # ---------- 防火墙 ----------
