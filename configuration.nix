@@ -138,7 +138,7 @@
     scrcpy go-musicfox 
     qq wechat telegram-desktop
     wpsoffice-cn podman-desktop gparted
-    obsidian zotero
+    obsidian zotero kdePackages.okular
     
     # Games
     protonup-rs bottles olympus hmcl osu-lazer
