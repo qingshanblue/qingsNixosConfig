@@ -27,25 +27,31 @@
   networking.hostName = "nixos";
   networking.networkmanager.enable = true;
 
-  time.timeZone = "Asia/Singapore";
+  time.timeZone = "Asia/Taipei";
+  networking.timeServers = [                                                       
+    "ntp.aliyun.com"                                                               
+    "ntp1.aliyun.com"                                                              
+    "ntp2.aliyun.com"                                                              
+    "time1.cloud.tencent.com"                                                      
+  ];
 
   # ---------- 国际化与 Locale ----------
-  i18n.defaultLocale = "zh_SG.UTF-8";
+  i18n.defaultLocale = "zh_TW.UTF-8";
   i18n.supportedLocales = [
-    "zh_SG.UTF-8/UTF-8"
+    "zh_TW.UTF-8/UTF-8"
     "en_US.UTF-8/UTF-8"
   ];
 
   i18n.extraLocaleSettings = {
-    LC_ADDRESS = "zh_SG.UTF-8";
-    LC_IDENTIFICATION = "zh_SG.UTF-8";
-    LC_MEASUREMENT = "zh_SG.UTF-8";
-    LC_MONETARY = "zh_SG.UTF-8";
-    LC_NAME = "zh_SG.UTF-8";
-    LC_NUMERIC = "zh_SG.UTF-8";
-    LC_PAPER = "zh_SG.UTF-8";
-    LC_TELEPHONE = "zh_SG.UTF-8";
-    LC_TIME = "zh_SG.UTF-8";
+    LC_ADDRESS = "zh_TW.UTF-8";
+    LC_IDENTIFICATION = "zh_TW.UTF-8";
+    LC_MEASUREMENT = "zh_TW.UTF-8";
+    LC_MONETARY = "zh_TW.UTF-8";
+    LC_NAME = "zh_TW.UTF-8";
+    LC_NUMERIC = "zh_TW.UTF-8";
+    LC_PAPER = "zh_TW.UTF-8";
+    LC_TELEPHONE = "zh_TW.UTF-8";
+    LC_TIME = "zh_TW.UTF-8";
   };
 
   # ---------- 输入法配置 ----------
@@ -137,7 +143,7 @@
     gui-for-singbox #YesPlayMusic
     scrcpy go-musicfox 
     qq wechat telegram-desktop
-    wpsoffice-cn podman-desktop gparted
+    wpsoffice-cn libreoffice podman-desktop gparted
     obsidian zotero kdePackages.okular
     
     # Games
