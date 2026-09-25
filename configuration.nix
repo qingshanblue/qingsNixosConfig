@@ -130,11 +130,19 @@
     go gopls delve golangci-lint
     
     # System & Desktop
-    glib xdg-user-dirs busybox neovim kitty nemo
+    glib wget xdg-user-dirs busybox neovim kitty nemo
     elephant walker waybar swaynotificationcenter
     kdePackages.ark hyprpolkitagent hyprpaper hyprshot hyprlock
     fastfetch qt6Packages.fcitx5-configtool mission-center
-    adwaita-icon-theme papirus-icon-theme better-control
+    adwaita-icon-theme papirus-icon-theme 
+    # better-control parses pactl output by English field names (Name/Description);
+    # under zh locale pactl emits Chinese keys, so the volume page shows no devices.
+    # Force C.UTF-8 inside this app only.
+    (better-control.overrideAttrs (old: {
+      postFixup = (old.postFixup or "") + ''
+        wrapProgram $out/bin/better-control --set LC_ALL C.UTF-8
+      '';
+    })) 
     pavucontrol blueman bluez-tools google-chrome firefox
     vscode.fhs motrix-next celluloid swayimg steam-run appimage-run
     ouch fd iptables
@@ -294,6 +302,7 @@
     NIXOS_OZONE_WL = "1";
     ELECTRON_OZONE_PLATFORM_HINT = "auto";
   };
+  environment.variables.EDITOR = "nvim";
   # ==============================================================
 
   # ---------- 合盖行为 ----------
