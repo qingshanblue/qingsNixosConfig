@@ -172,6 +172,13 @@
     ];
   };
 
+  # services.hermes-agent = {
+  #   enable = true;
+  #   settings.model.default = "anthropic/claude-sonnet-4";
+  #   environmentFiles = [ config.sops.secrets."hermes-env".path ];
+  #   addToSystemPackages = true;
+  # };
+
   # ---------- 定时任务 ----------
   services.cron = {
     enable = true;
@@ -326,6 +333,25 @@
       PubkeyAuthentication = true;
     };
   };
+
+  # ---------- WEBUI for SingBox ----------
+  # webui 1.1.4 的内核身份校验(readlink /proc/PID/exe)与二进制 setcap 冲突,
+  # 两个二进制都不能 setcap;TUN 所需权限由 ambient caps 提供并继承给内核子进程。
+  systemd.services.webui-for-singbox = {
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      User = "qings";
+      ExecStart = "/home/qings/.local/share/webui-for-singbox/webui.for.singbox";
+      WorkingDirectory = "/home/qings";
+      Restart = "on-failure";
+      RestartSec = 3;
+      AmbientCapabilities = [ "CAP_NET_ADMIN" "CAP_NET_RAW" ];
+      CapabilityBoundingSet = [ "CAP_NET_ADMIN" "CAP_NET_RAW" ];
+    };
+  };
+
 
   programs.proxychains = {
     enable = true;
