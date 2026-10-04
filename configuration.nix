@@ -132,7 +132,8 @@
     # System & Desktop
     glib wget xdg-user-dirs busybox neovim kitty nemo
     elephant walker waybar swaynotificationcenter
-    kdePackages.ark hyprpolkitagent hyprpaper hyprshot hyprlock
+    kdePackages.ark hyprpolkitagent hyprpaper hyprshot hyprpicker hyprlock
+    hypridle hyprshutdown hyprsunset hyprsysteminfo hyprland-qt-support
     fastfetch qt6Packages.fcitx5-configtool mission-center
     adwaita-icon-theme papirus-icon-theme 
     # better-control parses pactl output by English field names (Name/Description);
@@ -158,7 +159,7 @@
     protonup-rs bottles olympus hmcl osu-lazer
     
     # Agents
-    cc-switch claude-code codex pi-coding-agent
+    cc-switch codex claude-code pi-coding-agent
   ];
 
   # ---------- Nix-ld (用于运行预编译二进制) ----------
@@ -298,6 +299,30 @@
   hardware.tuxedo-rs = {
     enable = true;
     tailor-gui.enable = true;
+  };
+
+  # ---------- 风扇控制：休眠恢复后重建 Uniwill EC 手动控制 ----------
+  # S4 恢复会丢两份状态：tuxedo_io 的 fans_initialized 与 EC 0x0741 手动使能位
+  # （uniwill_wmi probe 时写入）。需重载两模块并强制写一次转速，见 tuxedo-rs #180。
+  systemd.services.tuxedo-fan-resume = {
+    description = "Restore Uniwill EC fan control after sleep";
+    after = [ "suspend.target" "hibernate.target" "hybrid-sleep.target" ];
+    wantedBy = [ "suspend.target" "hibernate.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = let
+        script = pkgs.writeShellScript "tuxedo-fan-resume" ''
+          /run/current-system/sw/bin/systemctl stop tailord.service || true
+          /run/current-system/sw/bin/modprobe -r tuxedo_io uniwill_wmi || true
+          /run/current-system/sw/bin/modprobe uniwill_wmi
+          /run/current-system/sw/bin/modprobe tuxedo_io
+          /run/current-system/sw/bin/systemctl start tailord.service
+          /run/current-system/sw/bin/sleep 3
+          /run/current-system/sw/bin/busctl call com.tux.Tailor /com/tux/Tailor com.tux.Tailor.Fan OverrideSpeed yy 0 30
+          /run/current-system/sw/bin/busctl call com.tux.Tailor /com/tux/Tailor com.tux.Tailor.Fan OverrideSpeed yy 1 30
+        '';
+      in [ "${script}" ];
+    };
   };
 
   # ==============================================================
