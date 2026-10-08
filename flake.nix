@@ -2,8 +2,9 @@
   description = "A simple NixOS flake";
 
   inputs = {
-    # NixOS 官方软件源，这里使用 nixos-26.05 分支
+    # NixOS 官方软件源，这里使用镜像
     nixpkgs.url = "tarball+https://mirrors.cernet.edu.cn/nix-channels/nixos-unstable/nixexprs.tar.xz";
+    # hermes agent
     hermes-agent.url = "github:NousResearch/hermes-agent";
   };
 

@@ -128,6 +128,7 @@
     python3 pixi uv
     rustc cargo rust-analyzer clippy rustfmt
     go gopls delve golangci-lint
+    stm32cubemx
     
     # System & Desktop
     glib wget xdg-user-dirs busybox neovim kitty nemo
@@ -153,7 +154,7 @@
     scrcpy go-musicfox 
     qq wechat telegram-desktop
     wpsoffice-cn libreoffice podman-desktop gparted
-    obsidian zotero kdePackages.okular
+    obsidian /* zotero */ kdePackages.okular
     
     # Games
     protonup-rs bottles olympus hmcl osu-lazer

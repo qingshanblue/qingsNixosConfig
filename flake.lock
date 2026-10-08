@@ -32,11 +32,11 @@
         "uv2nix": "uv2nix"
       },
       "locked": {
-        "lastModified": 1790862246,
-        "narHash": "sha256-DacQhBp/zAncwz5wNxt50DYmINvOP8RTL9A3YJ357qQ=",
+        "lastModified": 1791353581,
+        "narHash": "sha256-64QcLlwXF3lWt/qIPA2qSAlNb+OIri4iyyGvl66MMD8=",
         "owner": "NousResearch",
         "repo": "hermes-agent",
-        "rev": "46370fd2a206db255cf39678702baa9fe7e7d2b7",
+        "rev": "05eecbcd972c8737ebc7722ea08aab47fb538043",
         "type": "github"
       },
       "original": {
@@ -85,7 +85,7 @@
     "nixpkgs_2": {
       "locked": {
         "lastModified": 315532800,
-        "narHash": "sha256-EZwz6sR6RLzbKiJJ9QQgXPZ/zA6P8ecfFr/6fwBRfes=",
+        "narHash": "sha256-MFBjw66d4h06MvpW6lIl7RwarLteD0sk859CncGwb1Q=",
         "type": "tarball",
         "url": "https://mirrors.cernet.edu.cn/nix-channels/nixos-unstable/nixexprs.tar.xz"
       },
