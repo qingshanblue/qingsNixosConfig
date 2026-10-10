@@ -147,7 +147,7 @@
     })) 
     pavucontrol blueman bluez-tools google-chrome firefox
     vscode.fhs motrix-next celluloid swayimg steam-run appimage-run
-    ouch fd iptables
+    ouch fd iptables ncdu smartmontools
     
     # User Apps
     gui-for-singbox #YesPlayMusic
@@ -262,6 +262,7 @@
   services.udisks2.enable = true;
   services.upower.enable = true;          
   services.elephant.enable = true;
+  services.power-profiles-daemon.enable = true; # round-3: CPU 调度档(EPP),Super+Ctrl+P 切换经 powerprofilesctl 驱动
   # NixOS 单元默认注入窄 PATH(coreutils/findutils/grep/sed/systemd,无 sh 与 profile 目录),会遮蔽用户管理器的完整 PATH：
   # elephant 要用 sh 执行 .desktop 启动命令,拉起的应用也继承此 PATH,故整个替换为完整 profile 链 (elephant#69/#270)
   systemd.user.services.elephant.environment.PATH = pkgs.lib.mkForce "/run/wrappers/bin:/run/current-system/sw/bin:/etc/profiles/per-user/qings/bin:/home/qings/.nix-profile/bin:/home/qings/.local/share/flatpak/exports/bin:/var/lib/flatpak/exports/bin:${pkgs.bash}/bin";
