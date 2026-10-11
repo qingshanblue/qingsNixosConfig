@@ -123,11 +123,12 @@
     })
     
     # Development
-    git yq android-tools nodejs typescript bun typescript-language-server
+    git github-desktop yq android-tools nodejs typescript bun typescript-language-server
     clang bintools lldb clang-tools cmake gnumake
     python3 pixi uv
     rustc cargo rust-analyzer clippy rustfmt
     go gopls delve golangci-lint
+    bubblewrap socat ripgrep
     stm32cubemx
     
     # System & Desktop
