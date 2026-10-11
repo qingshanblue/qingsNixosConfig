@@ -284,12 +284,21 @@
     enable = true;
     enable32Bit = true;
   };
+  
+  nixpkgs.config.nvidia.acceptLicense = true;
   services.xserver.videoDrivers = [ "nvidia" ];
   hardware.nvidia = {
     open = false;
     modesetting.enable = true;
     nvidiaSettings = true;
     powerManagement.enable = true;  # 休眠唤醒需要
+    gsp.enable = false;   # 新增：手动指定版本的驱动不带 GSP 固件
+    package = config.boot.kernelPackages.nvidiaPackages.mkDriver {
+      version = "595.104.02";
+      sha256_64bit = "sha256-5CHCAuTHn1jDx/MWG75xRU67PYiTb4ggWg4yfNBMWco=";        # 换成 prefetch 得到的哈希
+      settingsSha256 = "sha256-4Kxro6tvI5aX4nu2RspgyBsW+Jq3/VYjSAS5UGdzTCU=";      # 先占位，报错后按提示换成真实值
+      persistencedSha256 = "sha256-4Kxro6tvI5aX4nu2RspgyBsW+Jq3/VYjSAS5UGdzTCU=";  # 同上
+    };
   };
   # ==============================================================
 
