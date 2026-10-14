@@ -151,6 +151,7 @@
     ouch fd iptables ncdu smartmontools
     
     # User Apps
+    openlist
     gui-for-singbox #YesPlayMusic
     scrcpy go-musicfox 
     qq wechat telegram-desktop
