@@ -133,7 +133,7 @@
     
     # System & Desktop
     glib wget xdg-user-dirs busybox neovim kitty nemo
-    elephant walker waybar swaynotificationcenter
+    elephant walker waybar swaynotificationcenter libnotify
     kdePackages.ark hyprpolkitagent hyprpaper hyprshot hyprpicker hyprlock
     hypridle hyprshutdown hyprsunset hyprsysteminfo hyprland-qt-support
     fastfetch qt6Packages.fcitx5-configtool mission-center
