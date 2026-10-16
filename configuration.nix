@@ -157,6 +157,9 @@
     qq wechat telegram-desktop
     wpsoffice-cn libreoffice podman-desktop gparted
     obsidian /* zotero */ kdePackages.okular
+
+    # Engineering
+    kicad ngspice
     
     # Games
     protonup-rs bottles olympus hmcl osu-lazer
