@@ -3,6 +3,7 @@
 {
   imports = [
     ./hardware-configuration.nix
+    ./label-studio.nix
   ];
 
   # ---------- Bootloader ----------
@@ -99,8 +100,12 @@
   nix.gc = {
     automatic = true;
     dates = "daily";
-    options = "--delete-older-than 14d";
+    options = "";
   };
+  # 每次自动回收前只保留最近 5 代系统代数（"-" 前缀：失败不阻断 GC）
+  systemd.services.nix-gc.serviceConfig.ExecStartPre = [
+    "-${pkgs.nix}/bin/nix-env -p /nix/var/nix/profiles/system --delete-generations +5"
+  ];
 
   # ---------- 系统软件包 ----------
   environment.systemPackages = with pkgs; [
@@ -128,12 +133,12 @@
     python3 pixi uv
     rustc cargo rust-analyzer clippy rustfmt
     go gopls delve golangci-lint
-    bubblewrap socat ripgrep
+    bubblewrap socat ripgrep wireshark
     stm32cubemx
     
     # System & Desktop
-    glib wget xdg-user-dirs busybox neovim kitty nemo
-    elephant walker waybar swaynotificationcenter libnotify
+    dig mtr glib wget xdg-user-dirs busybox neovim kitty nemo
+    elephant walker waybar swaynotificationcenter libnotify quickshell
     kdePackages.ark hyprpolkitagent hyprpaper hyprshot hyprpicker hyprlock
     hypridle hyprshutdown hyprsunset hyprsysteminfo hyprland-qt-support
     fastfetch qt6Packages.fcitx5-configtool mission-center
@@ -173,10 +178,10 @@
     }))
 
     # Engineering
-    kicad ngspice simulide
+    kicad ngspice simulide #bambu-studio
     
     # Games
-    protonup-rs bottles olympus hmcl osu-lazer
+    protonup-rs bottles olympus hmcl osu-lazer prismlauncher
     
     # Agents
     cc-switch codex claude-code pi-coding-agent
@@ -192,13 +197,6 @@
       libxrandr libxcursor libxcomposite libxdamage libxfixes libxcb dbus 
     ];
   };
-
-  # services.hermes-agent = {
-  #   enable = true;
-  #   settings.model.default = "anthropic/claude-sonnet-4";
-  #   environmentFiles = [ config.sops.secrets."hermes-env".path ];
-  #   addToSystemPackages = true;
-  # };
 
   # ---------- 定时任务 ----------
   services.cron = {

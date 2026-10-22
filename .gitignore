@@ -4,3 +4,4 @@
 !flake.lock
 !configuration.nix
 !hardware-configuration.nix
+!label-studio.nix
