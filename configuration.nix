@@ -138,21 +138,24 @@
     
     # System & Desktop
     dig mtr glib wget xdg-user-dirs busybox neovim kitty nemo
-    elephant walker waybar swaynotificationcenter libnotify quickshell
+    elephant walker libnotify wayle quickshell brightnessctl
+    # [已删除 waybar 相关] 恢复方法见 ~/.config/waybar/config.jsonc 顶部注释
+    # waybar swaynotificationcenter
     kdePackages.ark hyprpolkitagent hyprpaper hyprshot hyprpicker hyprlock
     hypridle hyprshutdown hyprsunset hyprsysteminfo hyprland-qt-support
     fastfetch qt6Packages.fcitx5-configtool mission-center
     adwaita-icon-theme papirus-icon-theme 
+    # [已删除 better-control] 恢复时取消注释以下几行(含 LC_ALL 包装,修复 zh 下音量页无设备):
     # better-control parses pactl output by English field names (Name/Description);
     # under zh locale pactl emits Chinese keys, so the volume page shows no devices.
     # Force C.UTF-8 inside this app only.
-    (better-control.overrideAttrs (old: {
-      postFixup = (old.postFixup or "") + ''
-        wrapProgram $out/bin/better-control --set LC_ALL C.UTF-8
-      '';
-    })) 
+    # (better-control.overrideAttrs (old: {
+    # postFixup = (old.postFixup or "") + ''
+    # wrapProgram $out/bin/better-control --set LC_ALL C.UTF-8
+    # '';
+    # }))
     pavucontrol blueman bluez-tools google-chrome firefox
-    vscode.fhs celluloid swayimg steam-run appimage-run
+    vscode.fhs celluloid swayimg steam-run
     ouch fd iptables ncdu smartmontools
     
     # User Apps
@@ -179,6 +182,7 @@
 
     # Engineering
     kicad ngspice simulide #bambu-studio
+    freecad solvespace openscad openscad # sindricAD
     
     # Games
     protonup-rs bottles olympus hmcl osu-lazer prismlauncher
@@ -225,6 +229,18 @@
       pkgs.xdg-desktop-portal-hyprland
     ];
   };
+
+  programs.appimage = {
+  enable = true;
+  binfmt = true;
+  # 使用 override 添加额外的依赖包
+  package = pkgs.appimage-run.override {
+    extraPkgs = pkgs: with pkgs; [
+      libepoxy
+      # 可以继续添加其他缺失的库，如 python312 等
+    ];
+  };
+};
 
   # ---------- Podman 容器虚拟化 ----------
   virtualisation.podman = {
