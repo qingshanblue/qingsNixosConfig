@@ -138,7 +138,7 @@
     
     # System & Desktop
     dig mtr glib wget xdg-user-dirs busybox neovim kitty nemo
-    elephant walker libnotify wayle quickshell brightnessctl
+    elephant walker libnotify wayle quickshell brightnessctl ddcutil
     # [已删除 waybar 相关] 恢复方法见 ~/.config/waybar/config.jsonc 顶部注释
     # waybar swaynotificationcenter
     kdePackages.ark hyprpolkitagent hyprpaper hyprshot hyprpicker hyprlock
