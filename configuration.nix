@@ -88,7 +88,7 @@
   users.users."qings" = {
     isNormalUser = true;
     description = "qingshanblue";
-    extraGroups = [ "networkmanager" "wheel" "seat" "tty" "input" "podman" ];
+    extraGroups = [ "networkmanager" "wheel" "seat" "tty" "input" "podman" "wireshark"];
     shell = pkgs.zsh;
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICqmCl4hD4e1vYIa7yCE30jpCSutMYJgEF6fiw8s26l6 qingshanblue@gmail.com"
@@ -129,12 +129,11 @@
     
     # Development
     git github-desktop yq android-tools nodejs typescript bun typescript-language-server
-    clang bintools lldb clang-tools cmake gnumake
+    gcc-arm-embedded clang lldb clang-tools cmake gnumake bintools
     python3 pixi uv
     rustc cargo rust-analyzer clippy rustfmt
     go gopls delve golangci-lint
-    bubblewrap socat ripgrep wireshark
-    stm32cubemx
+    bubblewrap socat ripgrep
     
     # System & Desktop
     dig mtr glib wget xdg-user-dirs busybox neovim kitty nemo
@@ -162,7 +161,22 @@
     openlist
     #gui-for-singbox #YesPlayMusic
     scrcpy go-musicfox 
-    qq wechat telegram-desktop
+    qq telegram-desktop
+    # wechat 以 XWayland 运行，而 hyprland 设了 xwayland.force_zero_scaling = true，
+    # 合成器不会替它缩放 → 只能自己套一层补 DPI。
+    # 为什么不放全局（~/.config/environment.d/00-env.conf 与 hyprland.lua 均已清掉）：
+    # QT_SCALE_FACTOR 在 Wayland 原生 Qt 程序上会乘在合成器 scale 之上（1.6 x 1.6），
+    # OpenSCAD / FreeCAD 会被放大 1.6 倍。
+    # 必须用 symlinkJoin 包住原包：只写 writeShellScriptBin 会丢掉原包的
+    # share/applications/wechat.desktop 和图标，walker / 应用菜单里就搜不到微信。
+    (symlinkJoin {
+      name = "wechat-scaled";
+      paths = [ wechat ];
+      nativeBuildInputs = [ makeWrapper ];
+      postBuild = ''
+        wrapProgram $out/bin/wechat --set QT_SCALE_FACTOR 1.6 --set GDK_SCALE 2
+      '';
+    })
     wpsoffice-cn libreoffice podman-desktop gparted
     obsidian /* zotero */ kdePackages.okular
     ## 修复 HTTPS 下载报 "unable to get local issuer certificate (20)"：
@@ -181,8 +195,25 @@
     }))
 
     # Engineering
-    kicad ngspice simulide #bambu-studio
-    freecad solvespace openscad openscad # sindricAD
+    # KiCad 10 的“选择工程模板”对话框用 wxWebView(WebKitGTK) 渲染模板预览。
+    # WebKit 的 DMA-BUF 渲染器会为该 toplevel 的 wl_surface 启用 linux-drm-syncobj
+    # 显式同步，而 GTK3 随后用共享内存 wl_buffer 提交同一 surface 却没带 acquire
+    # timeline；Hyprland 按协议报 no_acquire_point 并断开客户端，GDK3 收到断连后
+    # 静默 _exit(1) —— 表现为“点任意模板后 KiCad 瞬间消失”（无 stderr、无 core）。
+    # 规避：让 webview 退回软件渲染，预览仍然正常显示。
+    # 待 WebKitGTK / GTK3 / NVIDIA egl-wayland 上游修复后，删除本 override、
+    # 直接写回 `kicad` 即可。
+    (kicad.overrideAttrs (old: {
+      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ makeWrapper ];
+      postInstall = (old.postInstall or "") + ''
+        for prog in kicad pcbnew eeschema gerbview pcb_calculator pl_editor; do
+          wrapProgram "$out/bin/$prog" --set WEBKIT_DISABLE_DMABUF_RENDERER 1
+        done
+      '';
+    }))
+    stm32cubemx
+    ngspice simulide #bambu-studio
+    freecad openscad # sindricAD
     
     # Games
     protonup-rs bottles olympus hmcl osu-lazer prismlauncher
@@ -264,6 +295,13 @@
     capSysAdmin = false;
     openFirewall = true;
     settings.port = 47989;
+  };
+
+  programs.wireshark = {
+    package = pkgs.wireshark;
+    enable = true;
+    # dumpcap.enable = true;
+    # usbmon.enable = false;
   };
 
   # ---------- Steam ----------
@@ -384,7 +422,10 @@
     NIXOS_OZONE_WL = "1";
     ELECTRON_OZONE_PLATFORM_HINT = "auto";
   };
-  environment.variables.EDITOR = "nvim";
+  environment.variables = {
+    _JAVA_OPTIONS = "-Dsun.java2d.uiScale=2"; # int only
+    EDITOR = "nvim";
+  };
   # ==============================================================
 
   # ---------- 合盖行为 ----------
