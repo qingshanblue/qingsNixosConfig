@@ -414,18 +414,17 @@ in
   
   nixpkgs.config.nvidia.acceptLicense = true;
   services.xserver.videoDrivers = [ "nvidia" ];
+  # 2026-10-28 休眠黑屏修复实验：问题不在休眠基建（镜像写入/恢复均成功），
+  # 而是唤醒后闭源模块(无GSP)没有恢复显示管线，Hyprland 输出变 0x0 黑屏。
+  # 改用渠道 stock stable 包（= 同版本 595.104.02，flatpak 无感）+ open 内核模块 + GSP。
+  # 回退：git -C /etc/nixos checkout configuration.nix && sudo -E nixos-rebuild switch --flake .#nixos
   hardware.nvidia = {
-    open = false;
+    open = true;                    # Ampere 官方主线，电源管理/挂起恢复修复都在这条线
     modesetting.enable = true;
     nvidiaSettings = true;
     powerManagement.enable = true;  # 休眠唤醒需要
-    gsp.enable = false;   # 新增：手动指定版本的驱动不带 GSP 固件
-    package = config.boot.kernelPackages.nvidiaPackages.mkDriver {
-      version = "595.104.02";
-      sha256_64bit = "sha256-5CHCAuTHn1jDx/MWG75xRU67PYiTb4ggWg4yfNBMWco=";        # 换成 prefetch 得到的哈希
-      settingsSha256 = "sha256-4Kxro6tvI5aX4nu2RspgyBsW+Jq3/VYjSAS5UGdzTCU=";      # 先占位，报错后按提示换成真实值
-      persistencedSha256 = "sha256-4Kxro6tvI5aX4nu2RspgyBsW+Jq3/VYjSAS5UGdzTCU=";  # 同上
-    };
+    gsp.enable = true;              # open 模块必需 GSP 固件；stock 包自带，勿回退到手动 pin
+    package = config.boot.kernelPackages.nvidiaPackages.stable;  # 锁定渠道内 = 595.104.02
   };
   # ==============================================================
 
