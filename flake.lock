@@ -64,11 +64,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1792674469,
-        "narHash": "sha256-0wvV23hk+cntrJWA4QL/nBx47KXhM6WwiE9c0lh++ho=",
+        "lastModified": 1793025680,
+        "narHash": "sha256-IpAC4bCTRbBEvEjIElUjc1/Dl4Z4ldcHCzKC7oyPy50=",
         "owner": "Qumulo",
         "repo": "llm-agents",
-        "rev": "7d421dcf6004af575a97440b0adea868f52592d3",
+        "rev": "ad1c437f67382084597326ad0ce5d4156ff69da0",
         "type": "github"
       },
       "original": {
@@ -96,7 +96,7 @@
     "nixpkgs_2": {
       "locked": {
         "lastModified": 315532800,
-        "narHash": "sha256-gJX2+xcImvxBCI3bp7zXKLUX2AwsdTxMgJ1UX/5Hm/o=",
+        "narHash": "sha256-17eNBI5Khe4JZaRkL5hRGPWf8MZ6qv+bWAr4V8YeKBw=",
         "type": "tarball",
         "url": "https://mirrors.cernet.edu.cn/nix-channels/nixos-unstable/nixexprs.tar.xz"
       },
