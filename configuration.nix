@@ -125,10 +125,12 @@ in
     ];
   };
   services.udev = {
-    enable = true;
-    packages = [ pkgs.libsigrok ]; # 关键：加载 libsigrok 自带的 udev 规则
+    packages = [ pkgs.libsigrok pkgs.openocd ];
+    extraRules = ''
+      SUBSYSTEM=="usb", ATTR{idVendor}=="faed", ATTR{idProduct}=="4870", MODE="0666", TAG+="uaccess"
+      SUBSYSTEM=="hidraw", ATTRS{idVendor}=="faed", ATTRS{idProduct}=="4870", MODE="0666", TAG+="uaccess"
+    '';
   };
-
   # ---------- 垃圾回收与存储优化 ----------
   nix.optimise.automatic = true;
   nix.gc = {
@@ -176,7 +178,7 @@ in
     # ctrl+shift+c 依赖 kitty 侧选区，pi 开启鼠标跟踪(1000/1002/1006)后选区归 pi 管，
     # kitty 的快捷键自然失效）。没装 wl-clipboard 时 pi 会报
     # "Clipboard unavailable: install wl-clipboard"。walker/elephant 的剪贴板与此无关。
-    wl-clipboard
+    wl-clipboard hardinfo2 playerctl
     # wayle / quickshell 已移除(quickshell 由 programs.dms-shell 模块自带,勿手装)
     elephant walker libnotify brightnessctl ddcutil
     dotnet-runtime
@@ -270,7 +272,7 @@ in
     libraries = with pkgs; [
       zlib zstd stdenv.cc.cc.lib glib libGL libxkbcommon fontconfig libxshmfence 
       freetype wayland libxcb-cursor libxcb-image libxcb-keysyms
-      libxcb-render-util libxcb-wm libx11 libxext libxi libxrender fuse2
+      libxcb-render-util libxcb-wm libx11 libxext libxi libxrender fuse3
       libxrandr libxcursor libxcomposite libxdamage libxfixes libxcb dbus 
     ];
   };
@@ -443,6 +445,16 @@ in
   hardware.bluetooth = {
     enable = true;
     powerOnBoot = true;
+  };
+
+  services.avahi = {
+    enable = true;
+    settings.publish = {
+      "disable-publishing" = false;
+      "disable-user-service-publishing" = false;
+      "publish-addresses" = true;
+    };
+    # ... 其他选项保持不变
   };
 
   hardware.tuxedo-rs = {
