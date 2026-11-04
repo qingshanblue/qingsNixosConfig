@@ -152,6 +152,14 @@ in
     "-${pkgs.nix}/bin/nix-env -p /nix/var/nix/profiles/system --delete-generations +5"
   ];
 
+  # 系统服务环境变量 
+  systemd.globalEnvironment = {
+     http_proxy  = "http://127.0.0.1:20122";
+     https_proxy = "http://127.0.0.1:20122";
+     all_proxy   = "socks5://127.0.0.1:20122";
+     no_proxy    = "localhost,127.0.0.1,::1";
+  };
+  
   # ---------- 系统软件包 ----------
   environment.systemPackages = with pkgs; [
     # Waydroid ARM 转译层安装工具
