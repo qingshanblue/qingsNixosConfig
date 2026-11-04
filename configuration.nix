@@ -328,7 +328,7 @@ in
   # 使用 override 添加额外的依赖包
   package = pkgs.appimage-run.override {
     extraPkgs = pkgs: with pkgs; [
-      libepoxy
+      libepoxy libgpg-error
       # 可以继续添加其他缺失的库，如 python312 等
     ];
   };
