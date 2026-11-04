@@ -52,10 +52,18 @@ in
     });
   });
   boot.kernelParams = [ "resume=UUID=32a6a3c5-1ece-42cf-b802-9cb043a56e21" ];
+  boot.kernelModules = ["usbmon"];
 
   # ---------- 内核参数 ----------
   networking.hostName = "nixos";
   networking.networkmanager.enable = true;
+
+  # getaddrinfo IPv4 优先（RFC 6724 排序覆盖）：sing-box 屏蔽 v6（rules[4]）环境下，
+  # 避免 root 服务（nix-daemon substituter 查询等）先试 v6 被 TLS 阶段 RST。
+  # 生成 /etc/gai.conf：precedence ::ffff:0:0/96 100
+  networking.getaddrinfo.precedence = {
+    "::ffff:0:0/96" = 100;
+  };
 
   time.timeZone = "Asia/Taipei";
   networking.timeServers = [                                                       
@@ -129,6 +137,7 @@ in
     extraRules = ''
       SUBSYSTEM=="usb", ATTR{idVendor}=="faed", ATTR{idProduct}=="4870", MODE="0666", TAG+="uaccess"
       SUBSYSTEM=="hidraw", ATTRS{idVendor}=="faed", ATTRS{idProduct}=="4870", MODE="0666", TAG+="uaccess"
+      SUBSYSTEM=="usbmon", GROUP="wireshark", MODE="0640"
     '';
   };
   # ---------- 垃圾回收与存储优化 ----------
@@ -341,11 +350,11 @@ in
     settings.port = 47989;
   };
 
-  programs.wireshark = {
-    package = pkgs.wireshark;
+  programs.wireshark = {  
     enable = true;
-    # dumpcap.enable = true;
-    # usbmon.enable = false;
+    package = pkgs.wireshark;
+    dumpcap.enable = true;
+    usbmon.enable = true;
   };
 
   # ---------- Steam ----------
