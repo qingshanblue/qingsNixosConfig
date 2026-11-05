@@ -22,6 +22,7 @@ in
   imports = [
     ./hardware-configuration.nix
     ./label-studio.nix
+    ./astrbot.nix
   ];
 
   # ---------- Bootloader ----------
@@ -215,7 +216,7 @@ in
     # }))
     pavucontrol blueman bluez-tools google-chrome firefox
     vscode.fhs celluloid swayimg steam-run
-    ouch fd iptables ncdu smartmontools
+    ouch fd iptables ncdu smartmontools podman-compose kubectl
     
     # User Apps
     openlist
@@ -335,6 +336,9 @@ in
 };
 
   # ---------- Podman 容器虚拟化 ----------
+  environment.etc."containers/registries.conf".text = ''
+    unqualified-search-registries = ["docker.io"]
+  '';
   virtualisation.podman = {
     enable = true;
     dockerCompat = true;
