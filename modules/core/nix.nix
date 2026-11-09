@@ -1,4 +1,4 @@
-# Nix 本身：设置与镜像源、垃圾回收、nixpkgs 许可。
+# Nix 本身：设置与镜像源、垃圾回收、存储优化、nixpkgs 许可。
 
 { config, pkgs, ... }:
 
@@ -10,6 +10,7 @@
     dates = "daily";
     options = "";
   };
+
   # 每次自动回收前只保留最近 5 代系统代数（"-" 前缀：失败不阻断 GC）
   systemd.services.nix-gc.serviceConfig.ExecStartPre = [
     "-${pkgs.nix}/bin/nix-env -p /nix/var/nix/profiles/system --delete-generations +5"
@@ -28,7 +29,7 @@
     ];
     experimental-features = [ "nix-command" "flakes" ];
     auto-optimise-store = true;
-    # 包留Wrapper导致的编译
+    # 保留 Wrapper 导致的编译
     keep-derivations = true;
   };
 }

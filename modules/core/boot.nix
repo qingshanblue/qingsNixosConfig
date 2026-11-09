@@ -1,4 +1,4 @@
-# 引导与内核：GRUB 主题、tuxedo-drivers 内核补丁、resume 参数。
+# 引导与内核：GRUB 主题、tuxedo-drivers 内核补丁、休眠 resume 参数。
 
 { config, pkgs, ... }:
 
@@ -30,6 +30,7 @@
       '';
     });
   });
+
   boot.kernelParams = [ "resume=UUID=32a6a3c5-1ece-42cf-b802-9cb043a56e21" ];
-  boot.kernelModules = ["usbmon"];
+  boot.kernelModules = [ "usbmon" ];
 }

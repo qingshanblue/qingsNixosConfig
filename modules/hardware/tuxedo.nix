@@ -1,42 +1,8 @@
-# 硬件：音频、蓝牙、NVIDIA、tuxedo-rs 与风扇恢复、合盖行为。
+# 笔记本控制：Tuxedo-rs 驱动支持，以及休眠恢复后重建 Uniwill EC 风扇手动控制。
 
 { config, pkgs, ... }:
 
 {
-  # ---------- 音频 ----------
-  services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    pulse.enable = true;
-  };
-
-  # ==============================================================
-  # ---------- 图形与 NVIDIA 驱动 (最小化基准配置) ----------
-  # ==============================================================
-  hardware.graphics = {
-    enable = true;
-    enable32Bit = true;
-  };
-  
-  nixpkgs.config.nvidia.acceptLicense = true;
-  services.xserver.videoDrivers = [ "nvidia" ];
-  hardware.nvidia = {
-    open = true;                    # Ampere 官方主线，电源管理/挂起恢复修复都在这条线
-    modesetting.enable = true;
-    nvidiaSettings = true;
-    powerManagement.enable = true;  # 休眠唤醒需要
-    gsp.enable = true;              # open 模块必需 GSP 固件；stock 包自带，勿回退到手动 pin
-    package = config.boot.kernelPackages.nvidiaPackages.stable;  # 锁定渠道内 = 595.104.02
-  };
-  # ==============================================================
-
-  # ---------- 网络与蓝牙 ----------
-  hardware.bluetooth = {
-    enable = true;
-    powerOnBoot = true;
-  };
-
   hardware.tuxedo-rs = {
     enable = true;
     tailor-gui.enable = true;
@@ -73,17 +39,6 @@
           exit 1
         '';
       in [ "${script}" ];
-    };
-  };
-
-  # ---------- 合盖行为 ----------
-  services.logind.settings = {
-    Login = {
-      IdleAction = "lock";
-      IdleActionUSec = "10min";
-      HandleLidSwitch = "ignore";
-      HandleLidSwitchExternalPower = "ignore";
-      HandleLidSwitchDocked = "ignore";
     };
   };
 }

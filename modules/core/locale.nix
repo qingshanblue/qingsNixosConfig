@@ -4,11 +4,11 @@
 
 {
   time.timeZone = "Asia/Taipei";
-  networking.timeServers = [                                                       
-    "ntp.aliyun.com"                                                               
-    "ntp1.aliyun.com"                                                              
-    "ntp2.aliyun.com"                                                              
-    "time1.cloud.tencent.com"                                                      
+  networking.timeServers = [
+    "ntp.aliyun.com"
+    "ntp1.aliyun.com"
+    "ntp2.aliyun.com"
+    "time1.cloud.tencent.com"
   ];
 
   # ---------- 国际化与 Locale ----------

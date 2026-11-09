@@ -3,9 +3,10 @@
 
 !.gitignore
 
+!modules/**
+!lib/
+!lib/**
 !flake.nix
 !flake.lock
 
-!modules/**
-!configuration.nix
 !hardware-configuration.nix
