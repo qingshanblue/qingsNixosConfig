@@ -2,14 +2,6 @@
 
 let
   # ---------- XWayland 缩放包装器 ----------
-  # 本机缩放模型（2026-10 定稿，hyprland.lua 的 xwayland 段有同样的说明）：
-  #  * 合成器对显示器做 scale 1.6 → Wayland 原生程序（GTK/Qt/Electron/Chromium）
-  #    自动正确，绝不能再给它们设 GDK_SCALE/QT_SCALE_FACTOR（会乘成 1.6x1.6=2.56）。
-  #  * XWayland 开了 force_zero_scaling → X 画布 = 2560x1440 @96dpi，1:1 物理像素：
-  #    清晰，但按 1x 逻辑尺寸渲染 → 只有应有大小的 1/1.6。
-  #  * 所以每个 X11 程序都要自己按 1.6 渲染，且这些变量只能按程序设，不能全局。
-  # symlinkJoin 保留原包的 share/applications 与图标，否则 walker / 应用菜单搜不到。
-  # 注意 programs.steam.package 也能吃这个助手（Steam 用 GDK_SCALE，见下方 Steam 段）。
   mkScaled = name: pkg: bin: wrapperArgs:
     pkgs.symlinkJoin {
       inherit name;
@@ -21,7 +13,6 @@ in
 {
   imports = [
     ./hardware-configuration.nix
-    ./label-studio.nix
     ./astrbot.nix
   ];
 
@@ -59,9 +50,7 @@ in
   networking.hostName = "nixos";
   networking.networkmanager.enable = true;
 
-  # getaddrinfo IPv4 优先（RFC 6724 排序覆盖）：sing-box 屏蔽 v6（rules[4]）环境下，
-  # 避免 root 服务（nix-daemon substituter 查询等）先试 v6 被 TLS 阶段 RST。
-  # 生成 /etc/gai.conf：precedence ::ffff:0:0/96 100
+  # getaddrinfo IPv4 优先（RFC 6724 排序覆盖）
   networking.getaddrinfo.precedence = {
     "::ffff:0:0/96" = 100;
   };
@@ -113,6 +102,10 @@ in
     noto-fonts-cjk-sans
     noto-fonts-cjk-serif
     noto-fonts-color-emoji
+    dejavu_fonts
+    liberation_ttf
+    wqy_microhei
+    wqy_zenhei
   ];
 
   fonts.fontconfig.defaultFonts = {
@@ -121,6 +114,22 @@ in
     serif    = [ "Noto Serif CJK SC" "Noto Serif" ];
     emoji    = [ "Noto Color Emoji" ];
   };
+
+  # ---------- /usr/share/fonts 兼容层 ----------
+  systemd.tmpfiles.rules = [
+    # --- DejaVu（Unity Linux fallback 硬编码路径，本条直接修复 Mortuus）---
+    "L+ /usr/share/fonts/truetype/dejavu - - - - ${pkgs.dejavu_fonts}/share/fonts/truetype"
+
+    # --- Noto CJK（Debian/Arch 的 noto 布局）---
+    "L+ /usr/share/fonts/opentype/noto - - - - ${pkgs.noto-fonts-cjk-sans}/share/fonts/opentype/noto-cjk"
+
+    # --- WenQuanYi（老程序 / Wine 常见探测点）---
+    "L+ /usr/share/fonts/truetype/wqy - - - - ${pkgs.wqy_microhei}/share/fonts/truetype"
+
+    # --- 其余常见目录，覆盖按目录扫描的程序 ---
+    "L+ /usr/share/fonts/truetype/noto - - - - ${pkgs.noto-fonts}/share/fonts/truetype"
+    "L+ /usr/share/fonts/truetype/liberation - - - - ${pkgs.liberation_ttf}/share/fonts/truetype"
+  ];
 
   # ---------- 用户账户 ----------
   users.users."qings" = {
@@ -192,42 +201,29 @@ in
     
     # System & Desktop
     dig mtr glib wget xdg-user-dirs busybox neovim kitty nemo
-    # wl-copy/wl-paste: pi 在终端里选中即复制走的是 shell-out 到 wl-copy（kitty 自身的
-    # ctrl+shift+c 依赖 kitty 侧选区，pi 开启鼠标跟踪(1000/1002/1006)后选区归 pi 管，
-    # kitty 的快捷键自然失效）。没装 wl-clipboard 时 pi 会报
-    # "Clipboard unavailable: install wl-clipboard"。walker/elephant 的剪贴板与此无关。
     wl-clipboard hardinfo2 playerctl
-    # wayle / quickshell 已移除(quickshell 由 programs.dms-shell 模块自带,勿手装)
     elephant walker libnotify brightnessctl ddcutil
     dotnet-runtime
-    # waybar / swaynotificationcenter 已于 2026-10 移除(配置已备份至 ~/Downloads/legacy-shells-backup-20261027.tar.gz)
     kdePackages.ark hyprpolkitagent hyprpaper hyprshot hyprpicker hyprlock
     hypridle hyprshutdown hyprsunset hyprsysteminfo hyprland-qt-support
     fastfetch qt6Packages.fcitx5-configtool mission-center
     adwaita-icon-theme papirus-icon-theme 
-    # [已删除 better-control] 恢复时取消注释以下几行(含 LC_ALL 包装,修复 zh 下音量页无设备):
-    # better-control parses pactl output by English field names (Name/Description);
-    # under zh locale pactl emits Chinese keys, so the volume page shows no devices.
-    # Force C.UTF-8 inside this app only.
-    # (better-control.overrideAttrs (old: {
-    # postFixup = (old.postFixup or "") + ''
-    # wrapProgram $out/bin/better-control --set LC_ALL C.UTF-8
-    # '';
-    # }))
     pavucontrol blueman bluez-tools google-chrome firefox
     vscode.fhs celluloid swayimg steam-run
     ouch fd iptables ncdu smartmontools podman-compose kubectl
     
     # User Apps
     openlist
-    #gui-for-singbox #YesPlayMusic
+    (gui-for-singbox.overrideAttrs (old: {
+      nativeBuildInputs = (old.nativeBuildInputs or []) ++ [ makeWrapper ];
+      postInstall = (old.postInstall or "") + ''
+        wrapProgram $out/bin/GUI.for.SingBox \
+          --set __NV_DISABLE_EXPLICIT_SYNC 1
+      '';
+    }))
+    #YesPlayMusic
     scrcpy go-musicfox 
     qq telegram-desktop
-    # WeChat 4.x 实测是 Wayland 原生（Qt6 wayland QPA，hyprctl clients 里 xwayland=false）：
-    # 合成器的 1.6 它自己就吃到了（截图实测 UI 按 1.6 设备像素渲染，清晰且尺寸正确）。
-    # 千万别给它补 QT_SCALE_FACTOR：Wayland 下只会把窗口逻辑尺寸乘 1.6、内容仍在左上角
-    # 按原尺寸画（实测 factor=1.0/2.0 的绿色按钮包围盒完全一样 268x345px），
-    # 结果是窗口空出一大块。若将来某个版本改回 X11 通道，再用 mkScaled 补 1.6。
     wechat
     wpsoffice-cn libreoffice podman-desktop gparted
     obsidian /* zotero */ kdePackages.okular
@@ -288,10 +284,7 @@ in
   programs.nix-ld = {
     enable = true;
     libraries = with pkgs; [
-      zlib zstd stdenv.cc.cc.lib glib libGL libxkbcommon fontconfig libxshmfence 
-      freetype wayland libxcb-cursor libxcb-image libxcb-keysyms
-      libxcb-render-util libxcb-wm libx11 libxext libxi libxrender fuse3
-      libxrandr libxcursor libxcomposite libxdamage libxfixes libxcb dbus 
+      zlib zstd stdenv.cc.cc.lib glib libGL libxkbcommon fontconfig libxshmfence freetype wayland libxcb-cursor libxcb-image libxcb-keysyms libxcb-render-util libxcb-wm libx11 libxext libxi libxrender fuse3 libxrandr libxcursor libxcomposite libxdamage libxfixes libxcb dbus  webkitgtk_4_1 gtk3 glib-networking gdk-pixbuf cairo pango libsoup_3
     ];
   };
 
@@ -370,19 +363,8 @@ in
   };
 
   # ---------- Steam ----------
-  # XWayland 在 force_zero_scaling 下自报 96dpi，Steam 就按 1x 渲染 → 界面偏小。
-  # 实测（A/B：同一会话分别用 env GDK_SCALE=2 steam 启动，并确认该变量确实进了
-  # steamwebhelper 进程）GDK_SCALE 能让整个客户端——包括内嵌 CEF 的 Web UI——放大。
-  # 走的是 Chromium/CEF 的 GTK 集成（所以 Valve 自己的 .so 里 grep 不到这个字符串）。
-  # 老的 `-forcedesktopscaling 1.6` 在 2025 之后的客户端里已失效（传了也认，
-  # 但 steamwebhelper 不会拿到 --force-device-scale-factor），不再使用。
-  # GTK 的 GDK_SCALE 只支持整数，没有 1.6：2x 比目标大 25%，但清晰、实现最简单。
-  # 若想更接近 1.6，可再试 `--set GDK_DPI_SCALE 0.8`（CEF 部分不一定吃，需实测）。
   programs.steam = {
     enable = true;
-    # 用 pkgs.steam 官方的 extraEnv 入口（会被写进 FHS 内的 profile，即环境变量），
-    # 而不是 mkScaled：programs.steam 模块自己会对 package 调 .override{} 来补图形库，
-    # symlinkJoin 出来的包没有 .override，会直接报 "attribute 'override' missing"。
     package = pkgs.steam.override { extraEnv = { GDK_SCALE = "2"; }; };
     remotePlay.openFirewall = true;
     dedicatedServer.openFirewall = true;
@@ -418,9 +400,7 @@ in
   services.udisks2.enable = true;
   services.upower.enable = true;          
   services.elephant.enable = true;
-  services.power-profiles-daemon.enable = true; # round-3: CPU 调度档(EPP),Super+Ctrl+P 切换经 powerprofilesctl 驱动
-  # NixOS 单元默认注入窄 PATH(coreutils/findutils/grep/sed/systemd,无 sh 与 profile 目录),会遮蔽用户管理器的完整 PATH：
-  # elephant 要用 sh 执行 .desktop 启动命令,拉起的应用也继承此 PATH,故整个替换为完整 profile 链 (elephant#69/#270)
+  services.power-profiles-daemon.enable = true; 
   systemd.user.services.elephant.environment.PATH = pkgs.lib.mkForce "/run/wrappers/bin:/run/current-system/sw/bin:/etc/profiles/per-user/qings/bin:/home/qings/.nix-profile/bin:/home/qings/.local/share/flatpak/exports/bin:/var/lib/flatpak/exports/bin:${pkgs.bash}/bin";
 
 
@@ -442,10 +422,6 @@ in
   
   nixpkgs.config.nvidia.acceptLicense = true;
   services.xserver.videoDrivers = [ "nvidia" ];
-  # 2026-10-28 休眠黑屏修复实验：问题不在休眠基建（镜像写入/恢复均成功），
-  # 而是唤醒后闭源模块(无GSP)没有恢复显示管线，Hyprland 输出变 0x0 黑屏。
-  # 改用渠道 stock stable 包（= 同版本 595.104.02，flatpak 无感）+ open 内核模块 + GSP。
-  # 回退：git -C /etc/nixos checkout configuration.nix && sudo -E nixos-rebuild switch --flake .#nixos
   hardware.nvidia = {
     open = true;                    # Ampere 官方主线，电源管理/挂起恢复修复都在这条线
     modesetting.enable = true;
@@ -475,7 +451,6 @@ in
       "disable-user-service-publishing" = false;
       "publish-addresses" = true;
     };
-    # ... 其他选项保持不变
   };
 
   hardware.tuxedo-rs = {
@@ -520,13 +495,6 @@ in
   # ==============================================================
   # ---------- 环境变量 (清理为最小化) ----------
   # ==============================================================
-  # 移除了所有 NVD_BACKEND、GBM_BACKEND 和 WLR_DRM_NO_ATOMIC 等覆盖。
-  # 仅保留让 Electron 应用在 Wayland 下正常运行的基础变量。
-  #
-  # 缩放变量一律不设全局（GDK_SCALE / QT_SCALE_FACTOR / _JAVA_OPTIONS / Xft.dpi）：
-  # 它们会进入 systemd user manager 的环境被所有程序继承；Wayland 原生程序会把它
-  # 再乘在合成器 scale 1.6 之上（1.6x1.6=2.56 → FreeCAD/OpenSCAD 巨大）。
-  # X11 程序在 environment.systemPackages 里用 mkScaled 逐个补（见各自的注释）。
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1";
     ELECTRON_OZONE_PLATFORM_HINT = "auto";
@@ -559,8 +527,6 @@ in
   };
 
   # ---------- WEBUI for SingBox ----------
-  # webui 1.1.4 的内核身份校验(readlink /proc/PID/exe)与二进制 setcap 冲突,
-  # 两个二进制都不能 setcap;TUN 所需权限由 ambient caps 提供并继承给内核子进程。
   systemd.services.webui-for-singbox = {
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
@@ -589,7 +555,6 @@ in
   };
 
   # ---------- Tailscale 组网 ----------
-  # 手机端装 Tailscale App 登同一账号，Moonlight 连本机 100.x.x.x
   services.tailscale = {
     enable = true;
     openFirewall = true;  # 放行 UDP 41641，提高打洞直连成功率
