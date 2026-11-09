@@ -1,5 +1,4 @@
-{ ... }:
-
+# 容器：Podman（rootful，供 oci-containers 使用）、Waydroid、AstrBot。
 # AstrBot（聊天机器人框架），由 Podman 以 systemd 服务方式托管。
 #
 # 说明：
@@ -11,7 +10,25 @@
 # - 端口：6185 为 WebUI，6199 为 OneBot v11 反向 WebSocket 默认端口。
 # - 时区：挂载宿主机 /etc/localtime 与 /etc/timezone，避免容器内时间错乱。
 
+{ config, pkgs, ... }:
+
 {
+  # ---------- Podman 容器虚拟化 ----------
+  environment.etc."containers/registries.conf".text = ''
+    unqualified-search-registries = ["docker.io"]
+  '';
+  virtualisation.podman = {
+    enable = true;
+    dockerCompat = true;
+    defaultNetwork.settings.dns_enabled = true;
+  };
+
+  # ---------- Waydroid ----------
+  virtualisation.waydroid = {
+    enable = true;
+    package = pkgs.waydroid-nftables;
+  };
+
   # 数据目录：配置、数据库、插件等都在这里
   systemd.tmpfiles.rules = [
     "d /var/lib/astrbot 0755 1000 1000 -"

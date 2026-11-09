@@ -1,7 +1,11 @@
 *
+!*/
+
 !.gitignore
+
 !flake.nix
 !flake.lock
+
+!modules/**
 !configuration.nix
 !hardware-configuration.nix
-!astrbot.nix
