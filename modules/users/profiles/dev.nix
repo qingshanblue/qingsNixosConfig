@@ -13,8 +13,14 @@
       libxi libxrender fuse3 libxrandr libxcursor libxcomposite
       libxdamage libxfixes libxcb dbus webkitgtk_4_1 gtk3
       glib-networking gdk-pixbuf cairo pango libsoup_3
+      vulkan-loader
     ];
   };
+
+  # 曾用 environment.variables.LD_LIBRARY_PATH 全局注入 nix-ld 的库目录，但那会让 431 个
+  # 目录参与**所有**进程的库搜索，可能覆盖程序自带的库版本（ABI 撞车）。nix-ld 本身走
+  # NIX_LD + NIX_LD_LIBRARY_PATH，不需要它；需要它的交互式开发场景改由 zsh 的
+  # interactiveShellInit 提供（见 users/qings.nix），作用域只到终端里启动的程序。
 
   # ---------- AppImage 兼容层 ----------
   programs.appimage = {

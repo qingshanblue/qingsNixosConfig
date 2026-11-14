@@ -2,6 +2,34 @@
 
 { config, pkgs, ... }:
 
+let
+  # ---------- 带 VA-API 开关的 Chrome ----------
+  # 驱动层（nvidia-vaapi-driver）已就绪，但 Chrome 还需要 feature flag 才会启用 VA-API；
+  # 而 Chrome 156 的二进制里没有 *flags.conf 支持，flag 只能由包装脚本提供。
+  # 这里用 symlinkJoin + makeWrapper 把 flag 注入启动器，并同步改写 .desktop 的 Exec，
+  # 让菜单/launcher（walker/elephant）启动的也是带 flag 的那个。
+  google-chrome-vaapi = pkgs.symlinkJoin {
+    name = "google-chrome-vaapi";
+    paths = [ pkgs.google-chrome ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      # NVIDIA 上启用 VA-API 所需的一组 feature flag（AcceleratedVideoDecodeLinux* 是
+      # 新版 Chrome 里 VaapiVideoDecoder 的替身，VaapiOnNvidiaGPUs 才允许走 NVIDIA 驱动）
+      wrapProgram $out/bin/google-chrome-stable \
+        --add-flags "--enable-features=AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,VaapiOnNvidiaGPUs,VaapiIgnoreDriverChecks" \
+        --add-flags "--ignore-gpu-blocklist"
+
+      # symlinkJoin 输出里的 .desktop 是指向原包的符号链接，直接改会写穿到只读 store；
+      # 因此先删掉再重新生成，把 Exec 指向带 flag 的启动器。
+      for f in $out/share/applications/*.desktop; do
+        src="${pkgs.google-chrome}/share/applications/$(basename "$f")"
+        rm -f "$f"
+        sed -e "s|${pkgs.google-chrome}/bin/google-chrome-stable|$out/bin/google-chrome-stable|g" \
+            "$src" > "$f"
+      done
+    '';
+  };
+in
 {
   environment.systemPackages = with pkgs; [
     # ---------- 系统与桌面小工具 ----------
@@ -13,7 +41,7 @@
     busybox
     neovim
     kitty
-    nemo
+    nemo-with-extensions
     wl-clipboard
     hardinfo2
     playerctl
@@ -53,7 +81,8 @@
     gparted
 
     # ---------- 浏览器与视听 ----------
-    google-chrome
+    # 需要原版（不带 flag）对比测试时，把 google-chrome-vaapi 换成 google-chrome 即可
+    google-chrome-vaapi
     firefox
     celluloid
     swayimg

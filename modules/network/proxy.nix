@@ -30,7 +30,8 @@
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {
       User = "qings";
-      ExecStart = "/home/qings/.local/share/webui-for-singbox/webui.for.singbox";
+      ExecStart = "/home/qings/Apps/share/webui-for-singbox/webui.for.singbox";
+      
       WorkingDirectory = "/home/qings";
       Restart = "on-failure";
       RestartSec = 3;

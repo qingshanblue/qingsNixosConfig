@@ -30,15 +30,21 @@
     enableCompletion = true;
     autosuggestions.enable = true;
     syntaxHighlighting.enable = true;
+    # 把 nix-ld 聚合的库路径交给 LD_LIBRARY_PATH（交互式 shell 启动时生效）
+    interactiveShellInit = ''
+      export LD_LIBRARY_PATH="''${NIX_LD_LIBRARY_PATH}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    '';
   };
   programs.starship.enable = true;
 
   # ---------- 环境管理与变量 ----------
   programs.direnv.enable = true;
-
   environment.sessionVariables = {
+    LIBVA_DRIVER_NAME = "nvidia";
     NIXOS_OZONE_WL = "1";
     ELECTRON_OZONE_PLATFORM_HINT = "auto";
+    NVD_BACKEND = "direct";          # 新驱动（525+）必须用 direct 后端
+    MOZ_DISABLE_RDD_SANDBOX = "1";   # 只有用 Firefox 才需要
   };
   environment.variables = {
     EDITOR = "nvim";
