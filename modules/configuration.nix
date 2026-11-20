@@ -12,6 +12,7 @@
 
     # ---------- 硬件与驱动 ----------
     ./hardware/nvidia.nix
+    ./hardware/nvidia-flatpak.nix
     ./hardware/audio.nix
     ./hardware/bluetooth.nix
     ./hardware/tuxedo.nix

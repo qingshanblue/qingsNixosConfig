@@ -83,9 +83,10 @@
     vscode.fhs
 
     # AI Agents
-    cc-switch
+    # cc-switch
     codex
     claude-code
     pi-coding-agent
+    omp
   ];
 }

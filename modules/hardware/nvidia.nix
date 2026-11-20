@@ -29,6 +29,7 @@
     nvidiaSettings = true;
     powerManagement.enable = true;
     gsp.enable = true;
+    # 不追 new_feature/latest，等上游回合修复再升；flatpak 侧由 nvidia-flatpak.nix 自动对齐
     package = config.boot.kernelPackages.nvidiaPackages.stable;
   };
 }

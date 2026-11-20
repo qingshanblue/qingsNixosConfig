@@ -42,6 +42,7 @@ in
     neovim
     kitty
     nemo-with-extensions
+    yazi
     wl-clipboard
     hardinfo2
     playerctl
@@ -52,6 +53,10 @@ in
     ddcutil
     dotnet-runtime
     kdePackages.ark
+    ouch
+    peazip
+    _7zz
+    unrar
     hyprpolkitagent
     hyprpaper
     hyprshot
@@ -70,7 +75,6 @@ in
     pavucontrol
     blueman
     bluez-tools
-    ouch
     fd
     iptables
     ncdu
@@ -79,6 +83,7 @@ in
     podman-desktop
     kubectl
     gparted
+    rclone
 
     # ---------- 浏览器与视听 ----------
     # 需要原版（不带 flag）对比测试时，把 google-chrome-vaapi 换成 google-chrome 即可
