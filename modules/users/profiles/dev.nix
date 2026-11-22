@@ -86,6 +86,7 @@
     # cc-switch
     codex
     claude-code
+    antigravity-fhs
     pi-coding-agent
     omp
   ];
